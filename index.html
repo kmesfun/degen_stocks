@@ -1,0 +1,259 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Regarded Trade Site</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <div class="app-shell">
+      <aside class="sidebar" aria-label="Primary navigation">
+        <div class="brand">
+          <div class="brand-mark">RT</div>
+          <div>
+            <strong>Regarded</strong>
+            <span>Trade Site</span>
+          </div>
+        </div>
+
+        <nav class="nav-list" id="navList">
+          <button class="nav-item active" data-view="dashboard">Dashboard</button>
+          <button class="nav-item" data-view="ai">AI Intelligence</button>
+          <button class="nav-item" data-view="risk">Risk Center</button>
+          <button class="nav-item" data-view="news">News & Events</button>
+            <button class="nav-item" data-view="watchlist">Watchlist</button>
+        </nav>
+
+        <div class="market-card">
+          <span class="status-dot"></span>
+          <div>
+            <strong>Market Stream</strong>
+            <span id="streamLatency">1.8s latency</span>
+          </div>
+        </div>
+
+        <p class="disclaimer">
+          Regarded Trade Site is not a registered investment adviser. All content
+          is for informational purposes only. Past AI prediction accuracy does
+          not guarantee future accuracy. Trading volatile assets involves
+          substantial risk of loss.
+        </p>
+      </aside>
+
+      <main class="main-content">
+        <header class="topbar">
+          <div>
+            <p class="eyebrow">AI-powered volatile asset intelligence</p>
+            <h1 id="pageTitle">Unified Asset Dashboard</h1>
+          </div>
+          <div class="top-actions">
+            <label class="search-box">
+              <span>Search</span>
+              <input id="assetSearch" type="search" placeholder="Symbol or name" />
+            </label>
+            <button class="icon-button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">
+              T
+            </button>
+          </div>
+        </header>
+
+        <section class="ticker" aria-label="Live market ticker" id="ticker"></section>
+
+        <p class="legal-strip">
+          Regarded Trade Site is not a registered investment adviser. All content is for informational purposes only. Past AI prediction accuracy does not guarantee future accuracy.
+        </p>
+
+        <section class="view active" id="dashboardView" aria-labelledby="pageTitle">
+          <div class="metric-grid">
+            <article class="metric">
+              <span>Total Universe</span>
+              <strong id="totalAssets">0</strong>
+              <em>volatile assets tracked</em>
+            </article>
+            <article class="metric">
+              <span>Extreme Risk</span>
+              <strong id="extremeAssets">0</strong>
+              <em>scores above 80</em>
+            </article>
+            <article class="metric">
+              <span>AI Accuracy</span>
+              <strong id="aiAccuracy">61%</strong>
+              <em>directional, trailing 30 days</em>
+            </article>
+            <article class="metric">
+              <span>Breaking Catalysts</span>
+              <strong id="breakingCount">0</strong>
+              <em>watchlist-linked events</em>
+            </article>
+          </div>
+
+          <div class="workspace-grid">
+            <section class="panel asset-panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Volatile Asset Universe</h2>
+                  <p>Live rankings, AI calls, squeeze setup, and risk tiers.</p>
+                </div>
+                <button class="secondary-button" id="exportCsv">Export CSV</button>
+              </div>
+
+              <div class="filter-row">
+                <label>
+                  Category
+                  <select id="categoryFilter">
+                    <option value="All">All Assets</option>
+                    <option value="3x Leveraged ETF">3x Leveraged</option>
+                    <option value="Penny Stock">Penny Stocks</option>
+                    <option value="Active Squeeze">Squeeze Active</option>
+                    <option value="Squeeze Candidate">Squeeze Candidates</option>
+                    <option value="High-Volatility Stock">High-Volatility Stocks</option>
+                    <option value="Volatile ETF">Volatile ETFs</option>
+                  </select>
+                </label>
+                <label>
+                  Minimum Risk
+                  <input id="riskFilter" type="range" min="0" max="100" value="0" />
+                  <span id="riskValue">0</span>
+                </label>
+                <label>
+                  Sort
+                  <select id="sortSelect">
+                    <option value="risk">Risk Score</option>
+                    <option value="change">Daily Change</option>
+                    <option value="squeeze">Squeeze Score</option>
+                    <option value="confidence">AI Confidence</option>
+                  </select>
+                </label>
+              </div>
+
+              <div class="table-wrap">
+                <table>
+                  <thead>
+                    <tr>
+                      <th>Asset</th>
+                      <th>Category</th>
+                      <th>Price</th>
+                      <th>Change</th>
+                      <th>Risk</th>
+                      <th>AI Call</th>
+                      <th>Squeeze</th>
+                      <th></th>
+                    </tr>
+                  </thead>
+                  <tbody id="assetRows"></tbody>
+                </table>
+              </div>
+            </section>
+
+            <aside class="panel detail-panel">
+              <div class="panel-header compact">
+                <div>
+                  <h2 id="detailSymbol">TQQQ</h2>
+                  <p id="detailName">ProShares UltraPro QQQ</p>
+                </div>
+                <button class="watch-button" id="watchButton" aria-label="Toggle watchlist">*</button>
+              </div>
+
+              <div class="gauge-card">
+                <div class="risk-gauge" id="riskGauge" title="Top risk factors update with the selected asset">
+                  <div class="gauge-arc"></div>
+                  <div class="needle" id="gaugeNeedle"></div>
+                  <strong id="gaugeScore">84</strong>
+                  <span id="gaugeLabel">Extreme Risk</span>
+                </div>
+                <div class="risk-factors" id="riskFactors"></div>
+              </div>
+
+              <div class="prediction-card">
+                <span class="pill" id="predictionPill">Bullish / 72 confidence</span>
+                <h3 id="predictionTarget">$92.20 base target</h3>
+                <p id="predictionDriver">High volume expansion with supportive index momentum.</p>
+                <small>This is an AI-generated speculative analysis, not investment advice. Confidence scores do not represent probability of profit.</small>
+              </div>
+
+              <div class="mini-chart" id="miniChart" aria-label="Trailing risk score chart"></div>
+            </aside>
+          </div>
+        </section>
+
+        <section class="view" id="aiView">
+          <div class="split-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>AI vs. Actual Log</h2>
+                  <p>Immutable prediction history with graded outcomes.</p>
+                </div>
+              </div>
+              <div class="prediction-log" id="predictionLog"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Performance Dashboard</h2>
+                  <p>Accuracy by category, confidence tier, and horizon.</p>
+                </div>
+              </div>
+              <div class="bar-list" id="accuracyBars"></div>
+              <div class="streak-grid">
+                <div><strong>7</strong><span>current correct streak</span></div>
+                <div><strong>428</strong><span>graded predictions</span></div>
+                <div><strong>68%</strong><span>high confidence accuracy</span></div>
+              </div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="riskView">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Risk Rankings</h2>
+                <p>Composite 0-100 score from volatility, leverage, short interest, liquidity, and event proximity.</p>
+              </div>
+            </div>
+            <div class="risk-ranking" id="riskRanking"></div>
+          </div>
+        </section>
+
+        <section class="view" id="newsView">
+          <div class="split-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Breaking News</h2>
+                  <p>Event-linked summaries with sentiment and impact tags.</p>
+                </div>
+              </div>
+              <div class="news-list" id="newsList"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>90-Day Event Calendar</h2>
+                  <p>Earnings, FDA, macro, filings, and short interest dates.</p>
+                </div>
+              </div>
+              <div class="event-list" id="eventList"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="watchlistView">
+          <div class="panel">
+            <div class="panel-header">
+              <div>
+                <h2>Saved Assets</h2>
+                <p>Personal watchlist with threshold alerts and linked news.</p>
+              </div>
+            </div>
+            <div class="watchlist-grid" id="watchlistGrid"></div>
+          </div>
+        </section>
+      </main>
+    </div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>
