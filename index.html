@@ -3,88 +3,118 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Regarded Trade Site</title>
+    <title>Regarded Trade Site — Live Volatile Asset Intelligence</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@500;600&display=swap"
+      rel="stylesheet"
+    />
     <link rel="stylesheet" href="./styles.css" />
   </head>
   <body>
     <div class="app-shell">
       <aside class="sidebar" aria-label="Primary navigation">
         <div class="brand">
-          <div class="brand-mark">RT</div>
-          <div>
+          <div class="brand-mark" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17l5-5 4 4 8-9"/><path d="M14 7h6v6"/></svg>
+          </div>
+          <div class="brand-text">
             <strong>Regarded</strong>
-            <span>Trade Site</span>
+            <span>Trade Intelligence</span>
           </div>
         </div>
 
-        <nav class="nav-list" id="navList">
-          <button class="nav-item active" data-view="dashboard">Dashboard</button>
-          <button class="nav-item" data-view="ai">AI Intelligence</button>
-          <button class="nav-item" data-view="risk">Risk Center</button>
-          <button class="nav-item" data-view="news">News & Events</button>
-            <button class="nav-item" data-view="watchlist">Watchlist</button>
+        <nav class="nav-list" id="navList" aria-label="Sections">
+          <button class="nav-item active" data-view="dashboard" aria-label="Dashboard">
+            <svg viewBox="0 0 24 24" class="nav-ico"><path d="M3 12l2-2 4 4 6-6 4 4 2-2"/></svg>
+            <span>Dashboard</span>
+          </button>
+          <button class="nav-item" data-view="ai" aria-label="Signals">
+            <svg viewBox="0 0 24 24" class="nav-ico"><circle cx="12" cy="12" r="3"/><path d="M12 3v3M12 18v3M3 12h3M18 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>
+            <span>Signals</span>
+          </button>
+          <button class="nav-item" data-view="quant" aria-label="Quant Lab">
+            <svg viewBox="0 0 24 24" class="nav-ico"><path d="M4 19V5"/><path d="M4 19h16"/><path d="M7 16l3-5 3 2 5-7"/></svg>
+            <span>Quant Lab</span>
+          </button>
+          <button class="nav-item" data-view="risk" aria-label="Risk Center">
+            <svg viewBox="0 0 24 24" class="nav-ico"><path d="M12 3l9 16H3L12 3z"/><path d="M12 10v4M12 17h.01"/></svg>
+            <span>Risk Center</span>
+          </button>
+          <button class="nav-item" data-view="news" aria-label="Events">
+            <svg viewBox="0 0 24 24" class="nav-ico"><rect x="3" y="5" width="18" height="14" rx="2"/><path d="M7 9h10M7 13h10M7 17h6"/></svg>
+            <span>Events</span>
+          </button>
+          <button class="nav-item" data-view="watchlist" aria-label="Watchlist">
+            <svg viewBox="0 0 24 24" class="nav-ico"><path d="M12 4l2.5 5.5L20 10l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 4z"/></svg>
+            <span>Watchlist</span>
+          </button>
         </nav>
 
-        <div class="market-card">
-          <span class="status-dot"></span>
+        <div class="market-card" id="marketStatus">
+          <span class="status-dot" aria-hidden="true"></span>
           <div>
-            <strong>Market Stream</strong>
-            <span id="streamLatency">1.8s latency</span>
+            <strong id="marketStatusLabel">Connecting…</strong>
+            <span id="streamLatency">Fetching live quotes</span>
           </div>
         </div>
 
         <p class="disclaimer">
-          Regarded Trade Site is not a registered investment adviser. All content
-          is for informational purposes only. Past AI prediction accuracy does
-          not guarantee future accuracy. Trading volatile assets involves
-          substantial risk of loss.
+          Regarded Trade Site is not a registered investment adviser. All
+          content is informational. Quotes are delayed by the upstream data
+          provider; past signal accuracy does not guarantee future accuracy.
         </p>
       </aside>
 
       <main class="main-content">
         <header class="topbar">
-          <div>
-            <p class="eyebrow">AI-powered volatile asset intelligence</p>
+          <div class="topbar-titles">
+            <p class="eyebrow">Live volatile-asset intelligence</p>
             <h1 id="pageTitle">Unified Asset Dashboard</h1>
           </div>
           <div class="top-actions">
             <label class="search-box">
-              <span>Search</span>
-              <input id="assetSearch" type="search" placeholder="Symbol or name" />
+              <span>Search universe</span>
+              <input id="assetSearch" type="search" placeholder="Symbol or name" autocomplete="off" />
             </label>
+            <button class="icon-button" id="refreshBtn" aria-label="Refresh quotes" title="Refresh quotes">
+              <svg viewBox="0 0 24 24"><path d="M21 12a9 9 0 1 1-3-6.7"/><path d="M21 4v5h-5"/></svg>
+            </button>
             <button class="icon-button" id="themeToggle" aria-label="Toggle theme" title="Toggle theme">
-              T
+              <svg viewBox="0 0 24 24" class="ico-moon"><path d="M21 12.8A9 9 0 1 1 11.2 3a7 7 0 0 0 9.8 9.8z"/></svg>
+              <svg viewBox="0 0 24 24" class="ico-sun"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M2 12h2M20 12h2M5 5l1.5 1.5M17.5 17.5L19 19M5 19l1.5-1.5M17.5 6.5L19 5"/></svg>
             </button>
           </div>
         </header>
 
         <section class="ticker" aria-label="Live market ticker" id="ticker"></section>
 
-        <p class="legal-strip">
-          Regarded Trade Site is not a registered investment adviser. All content is for informational purposes only. Past AI prediction accuracy does not guarantee future accuracy.
+        <p class="legal-strip" id="dataAttribution">
+          Quotes via Yahoo Finance (proxied for browser access) · refreshed every 60 seconds. Informational only — not investment advice.
         </p>
 
         <section class="view active" id="dashboardView" aria-labelledby="pageTitle">
           <div class="metric-grid">
             <article class="metric">
               <span>Total Universe</span>
-              <strong id="totalAssets">0</strong>
+              <strong id="totalAssets">—</strong>
               <em>volatile assets tracked</em>
             </article>
             <article class="metric">
               <span>Extreme Risk</span>
-              <strong id="extremeAssets">0</strong>
-              <em>scores above 80</em>
+              <strong id="extremeAssets">—</strong>
+              <em>composite score above 80</em>
             </article>
             <article class="metric">
-              <span>AI Accuracy</span>
-              <strong id="aiAccuracy">61%</strong>
-              <em>directional, trailing 30 days</em>
+              <span>Universe Avg Vol</span>
+              <strong id="avgVol">—</strong>
+              <em>30-day realized, annualized</em>
             </article>
             <article class="metric">
-              <span>Breaking Catalysts</span>
-              <strong id="breakingCount">0</strong>
-              <em>watchlist-linked events</em>
+              <span>Auto-detected Events</span>
+              <strong id="breakingCount">—</strong>
+              <em>watchlist-linked signals</em>
             </article>
           </div>
 
@@ -93,9 +123,12 @@
               <div class="panel-header">
                 <div>
                   <h2>Volatile Asset Universe</h2>
-                  <p>Live rankings, AI calls, squeeze setup, and risk tiers.</p>
+                  <p>Live quotes, momentum signals, squeeze proxy, and composite risk tier.</p>
                 </div>
-                <button class="secondary-button" id="exportCsv">Export CSV</button>
+                <button class="secondary-button" id="exportCsv">
+                  <svg viewBox="0 0 24 24"><path d="M12 4v12M6 12l6 6 6-6M4 20h16"/></svg>
+                  <span>Export CSV</span>
+                </button>
               </div>
 
               <div class="filter-row">
@@ -104,25 +137,24 @@
                   <select id="categoryFilter">
                     <option value="All">All Assets</option>
                     <option value="3x Leveraged ETF">3x Leveraged</option>
-                    <option value="Penny Stock">Penny Stocks</option>
                     <option value="Active Squeeze">Squeeze Active</option>
                     <option value="Squeeze Candidate">Squeeze Candidates</option>
                     <option value="High-Volatility Stock">High-Volatility Stocks</option>
                     <option value="Volatile ETF">Volatile ETFs</option>
                   </select>
                 </label>
-                <label>
-                  Minimum Risk
+                <label class="risk-label">
+                  Minimum Risk <span id="riskValue">0</span>
                   <input id="riskFilter" type="range" min="0" max="100" value="0" />
-                  <span id="riskValue">0</span>
                 </label>
                 <label>
-                  Sort
+                  Sort by
                   <select id="sortSelect">
                     <option value="risk">Risk Score</option>
                     <option value="change">Daily Change</option>
-                    <option value="squeeze">Squeeze Score</option>
-                    <option value="confidence">AI Confidence</option>
+                    <option value="squeeze">Squeeze Proxy</option>
+                    <option value="confidence">Signal Confidence</option>
+                    <option value="vol">Realized Vol</option>
                   </select>
                 </label>
               </div>
@@ -133,15 +165,17 @@
                     <tr>
                       <th>Asset</th>
                       <th>Category</th>
-                      <th>Price</th>
-                      <th>Change</th>
-                      <th>Risk</th>
-                      <th>AI Call</th>
-                      <th>Squeeze</th>
-                      <th></th>
+                      <th class="num">Price</th>
+                      <th class="num">Change</th>
+                      <th class="num">Risk</th>
+                      <th>Signal</th>
+                      <th class="num">Squeeze</th>
+                      <th aria-label="Actions"></th>
                     </tr>
                   </thead>
-                  <tbody id="assetRows"></tbody>
+                  <tbody id="assetRows">
+                    <tr class="skeleton-row"><td colspan="8">Loading live quotes…</td></tr>
+                  </tbody>
                 </table>
               </div>
             </section>
@@ -149,30 +183,51 @@
             <aside class="panel detail-panel">
               <div class="panel-header compact">
                 <div>
-                  <h2 id="detailSymbol">TQQQ</h2>
-                  <p id="detailName">ProShares UltraPro QQQ</p>
+                  <h2 id="detailSymbol">—</h2>
+                  <p id="detailName">Select an asset</p>
                 </div>
-                <button class="watch-button" id="watchButton" aria-label="Toggle watchlist">*</button>
+                <button class="watch-button" id="watchButton" aria-label="Toggle watchlist" aria-pressed="false">
+                  <svg viewBox="0 0 24 24" class="star-ico"><path d="M12 4l2.5 5.5L20 10l-4 4 1 6-5-3-5 3 1-6-4-4 5.5-.5L12 4z"/></svg>
+                </button>
               </div>
 
               <div class="gauge-card">
-                <div class="risk-gauge" id="riskGauge" title="Top risk factors update with the selected asset">
-                  <div class="gauge-arc"></div>
-                  <div class="needle" id="gaugeNeedle"></div>
-                  <strong id="gaugeScore">84</strong>
-                  <span id="gaugeLabel">Extreme Risk</span>
+                <div class="risk-gauge" id="riskGauge">
+                  <svg viewBox="0 0 200 120" class="gauge-svg" aria-hidden="true">
+                    <defs>
+                      <linearGradient id="gaugeGrad" x1="0" x2="1" y1="0" y2="0">
+                        <stop offset="0%" stop-color="#3dd6a3"/>
+                        <stop offset="40%" stop-color="#f7bd4a"/>
+                        <stop offset="70%" stop-color="#ff704d"/>
+                        <stop offset="100%" stop-color="#d92f43"/>
+                      </linearGradient>
+                    </defs>
+                    <path d="M20 100 A80 80 0 0 1 180 100" stroke="url(#gaugeGrad)" stroke-width="14" fill="none" stroke-linecap="round"/>
+                    <line id="gaugeNeedle" x1="100" y1="100" x2="100" y2="32" stroke="currentColor" stroke-width="3" stroke-linecap="round"/>
+                    <circle cx="100" cy="100" r="6" fill="currentColor"/>
+                  </svg>
+                  <div class="gauge-readout">
+                    <strong id="gaugeScore">—</strong>
+                    <span id="gaugeLabel">—</span>
+                  </div>
                 </div>
                 <div class="risk-factors" id="riskFactors"></div>
               </div>
 
               <div class="prediction-card">
-                <span class="pill" id="predictionPill">Bullish / 72 confidence</span>
-                <h3 id="predictionTarget">$92.20 base target</h3>
-                <p id="predictionDriver">High volume expansion with supportive index momentum.</p>
-                <small>This is an AI-generated speculative analysis, not investment advice. Confidence scores do not represent probability of profit.</small>
+                <span class="pill" id="predictionPill">—</span>
+                <h3 id="predictionTarget">—</h3>
+                <p id="predictionDriver">Signal will appear once data loads.</p>
+                <small>Heuristic momentum signal derived from recent price action — not investment advice. Confidence does not represent probability of profit.</small>
               </div>
 
-              <div class="mini-chart" id="miniChart" aria-label="Trailing risk score chart"></div>
+              <div class="mini-chart-wrap">
+                <div class="mini-chart-header">
+                  <span>60-day price</span>
+                  <span id="miniChartRange">—</span>
+                </div>
+                <svg id="miniChart" viewBox="0 0 320 110" preserveAspectRatio="none" aria-label="60-day price"></svg>
+              </div>
             </aside>
           </div>
         </section>
@@ -182,8 +237,8 @@
             <section class="panel">
               <div class="panel-header">
                 <div>
-                  <h2>AI vs. Actual Log</h2>
-                  <p>Immutable prediction history with graded outcomes.</p>
+                  <h2>Signal vs. Outcome Log</h2>
+                  <p>Replays last week's momentum signal against actual price evolution. Grading is mechanical.</p>
                 </div>
               </div>
               <div class="prediction-log" id="predictionLog"></div>
@@ -192,14 +247,58 @@
               <div class="panel-header">
                 <div>
                   <h2>Performance Dashboard</h2>
-                  <p>Accuracy by category, confidence tier, and horizon.</p>
+                  <p>Hit-rate of the momentum signal on the loaded universe.</p>
                 </div>
               </div>
               <div class="bar-list" id="accuracyBars"></div>
-              <div class="streak-grid">
-                <div><strong>7</strong><span>current correct streak</span></div>
-                <div><strong>428</strong><span>graded predictions</span></div>
-                <div><strong>68%</strong><span>high confidence accuracy</span></div>
+              <div class="streak-grid" id="streakGrid"></div>
+            </section>
+          </div>
+        </section>
+
+        <section class="view" id="quantView">
+          <div class="quant-hero panel">
+            <div>
+              <p class="eyebrow">Backtested market prediction rules</p>
+              <h2 id="quantBestName">Best Strategy</h2>
+              <p id="quantTakeaway">A strategy only earns a place here after it beats the benchmark on the backtest scoreboard.</p>
+            </div>
+            <div class="quant-score">
+              <span>Best Sharpe</span>
+              <strong id="quantBestSharpe">—</strong>
+            </div>
+          </div>
+
+          <div class="split-grid">
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Strategy Backtest</h2>
+                  <p id="quantPeriod">Adjusted-close ETF test with transaction costs and no look-ahead.</p>
+                </div>
+              </div>
+              <div class="quant-results" id="quantResults"></div>
+            </section>
+            <section class="panel">
+              <div class="panel-header">
+                <div>
+                  <h2>Methodology</h2>
+                  <p>Evidence-backed rules tested against a passive market benchmark.</p>
+                </div>
+              </div>
+              <div class="method-list">
+                <article>
+                  <strong>Rules</strong>
+                  <p>Buy & hold SPY, 200-day trend timing, 12-month time-series momentum, dual momentum top-3, and 2-day RSI mean reversion.</p>
+                </article>
+                <article>
+                  <strong>Universe</strong>
+                  <p>SPY, QQQ, IWM, EFA, EEM, TLT, GLD, DBC, VNQ, with SHY as the defensive asset.</p>
+                </article>
+                <article>
+                  <strong>Controls</strong>
+                  <p>Signals use only prior data, monthly rebalance for momentum/trend models, and 5 bps turnover cost.</p>
+                </article>
               </div>
             </section>
           </div>
@@ -210,7 +309,7 @@
             <div class="panel-header">
               <div>
                 <h2>Risk Rankings</h2>
-                <p>Composite 0-100 score from volatility, leverage, short interest, liquidity, and event proximity.</p>
+                <p>Composite 0–100 score from realized volatility, leverage, price tier, and recent drawdown.</p>
               </div>
             </div>
             <div class="risk-ranking" id="riskRanking"></div>
@@ -222,8 +321,8 @@
             <section class="panel">
               <div class="panel-header">
                 <div>
-                  <h2>Breaking News</h2>
-                  <p>Event-linked summaries with sentiment and impact tags.</p>
+                  <h2>Auto-Detected Market Events</h2>
+                  <p>Programmatic signals from price, volume, and volatility — not curated headlines.</p>
                 </div>
               </div>
               <div class="news-list" id="newsList"></div>
@@ -231,8 +330,8 @@
             <section class="panel">
               <div class="panel-header">
                 <div>
-                  <h2>90-Day Event Calendar</h2>
-                  <p>Earnings, FDA, macro, filings, and short interest dates.</p>
+                  <h2>Anchored Event Calendar</h2>
+                  <p>Macro and category-level windows. Verify exact dates with your broker calendar.</p>
                 </div>
               </div>
               <div class="event-list" id="eventList"></div>
@@ -245,7 +344,7 @@
             <div class="panel-header">
               <div>
                 <h2>Saved Assets</h2>
-                <p>Personal watchlist with threshold alerts and linked news.</p>
+                <p>Watched symbols with live deltas and event linkage.</p>
               </div>
             </div>
             <div class="watchlist-grid" id="watchlistGrid"></div>
