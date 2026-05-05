@@ -1,0 +1,99 @@
+{
+  "generatedAt": "2026-05-05T22:47:16.224511+00:00",
+  "period": {
+    "start": "2011-01-04",
+    "end": "2026-05-04"
+  },
+  "universe": [
+    "SPY",
+    "QQQ",
+    "IWM",
+    "EFA",
+    "EEM",
+    "TLT",
+    "GLD",
+    "DBC",
+    "VNQ"
+  ],
+  "safeAsset": "SHY",
+  "assumptions": {
+    "data": "Yahoo Finance adjusted close via chart endpoint",
+    "rebalance": "Monthly for trend/momentum rules; daily state update for RSI rule",
+    "transactionCostBps": 5.0,
+    "lookahead": "Signals use data available before the return day"
+  },
+  "results": [
+    {
+      "name": "Buy & Hold SPY",
+      "description": "Always long SPY as a passive market benchmark.",
+      "totalReturn": 6.4080476191560125,
+      "cagr": 0.13986188165688995,
+      "volatility": 0.1709975079953982,
+      "sharpe": 0.817917660300955,
+      "maxDrawdown": -0.33717259887837037,
+      "monthlyWinRate": 0.6810810810810811,
+      "finalEquity": 7.4080476191560125,
+      "avgExposure": 1.0
+    },
+    {
+      "name": "SPY 200D Trend Timing",
+      "description": "Long SPY only when SPY closes above its 200-day average; otherwise in SHY.",
+      "totalReturn": 2.474763575784947,
+      "cagr": 0.08482602364961633,
+      "volatility": 0.12709850681977916,
+      "sharpe": 0.6674037781568622,
+      "maxDrawdown": -0.29162797045999034,
+      "monthlyWinRate": 0.6864864864864865,
+      "finalEquity": 3.474763575784947,
+      "avgExposure": 0.8425421530479896
+    },
+    {
+      "name": "12M Time-Series Momentum Basket",
+      "description": "Monthly equal-weight basket of assets with positive 12-month momentum; idle capital goes to SHY.",
+      "totalReturn": 2.1540479114001334,
+      "cagr": 0.07798035197153252,
+      "volatility": 0.13293639055230436,
+      "sharpe": 0.5865989865344722,
+      "maxDrawdown": -0.2871993339819019,
+      "monthlyWinRate": 0.6108108108108108,
+      "finalEquity": 3.1540479114001334,
+      "avgExposure": 0.9945525291828794
+    },
+    {
+      "name": "Dual Momentum Top-3",
+      "description": "Monthly rotation into the top three 12-month momentum assets only if each is above its 200-day average; otherwise SHY.",
+      "totalReturn": 2.1887016027834485,
+      "cagr": 0.07875063154507611,
+      "volatility": 0.13880101910768555,
+      "sharpe": 0.5673634966900297,
+      "maxDrawdown": -0.27739126080307885,
+      "monthlyWinRate": 0.6,
+      "finalEquity": 3.1887016027834485,
+      "avgExposure": 0.9452658884565499
+    },
+    {
+      "name": "SPY 2-Day RSI Mean Reversion",
+      "description": "Long SPY after very short-term oversold readings, exit to SHY after rebound.",
+      "totalReturn": 0.5290159643380374,
+      "cagr": 0.02814637623484728,
+      "volatility": 0.12365263448704154,
+      "sharpe": 0.22762455771047033,
+      "maxDrawdown": -0.37260390215875694,
+      "monthlyWinRate": 0.5621621621621622,
+      "finalEquity": 1.5290159643380374,
+      "avgExposure": 0.34941634241245134
+    }
+  ],
+  "best": {
+    "name": "Buy & Hold SPY",
+    "description": "Always long SPY as a passive market benchmark.",
+    "totalReturn": 6.4080476191560125,
+    "cagr": 0.13986188165688995,
+    "volatility": 0.1709975079953982,
+    "sharpe": 0.817917660300955,
+    "maxDrawdown": -0.33717259887837037,
+    "monthlyWinRate": 0.6810810810810811,
+    "finalEquity": 7.4080476191560125,
+    "avgExposure": 1.0
+  }
+}

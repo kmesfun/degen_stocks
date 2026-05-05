@@ -1,507 +1,838 @@
-const assets = [
-  {
-    symbol: "TQQQ",
-    name: "ProShares UltraPro QQQ",
-    category: "3x Leveraged ETF",
-    price: 88.14,
-    change: 3.4,
-    risk: 84,
-    squeeze: 22,
-    ai: "Bullish",
-    confidence: 72,
-    target: 92.2,
-    driver: "Index momentum and options flow outweigh elevated compounding decay.",
-    factors: [
-      ["Leverage factor", 94],
-      ["30-day realized volatility", 82],
-      ["Beta to market", 76],
-    ],
-    history: [69, 72, 70, 73, 76, 75, 79, 81, 84, 82, 85, 84],
-  },
-  {
-    symbol: "SOXL",
-    name: "Direxion Daily Semiconductor Bull 3x",
-    category: "3x Leveraged ETF",
-    price: 42.38,
-    change: -2.1,
-    risk: 88,
-    squeeze: 18,
-    ai: "Neutral",
-    confidence: 61,
-    target: 41.5,
-    driver: "Semiconductor breadth is weakening while implied volatility remains elevated.",
-    factors: [
-      ["Leverage factor", 95],
-      ["Implied volatility rank", 87],
-      ["Event proximity", 71],
-    ],
-    history: [78, 80, 82, 79, 83, 86, 88, 89, 86, 87, 90, 88],
-  },
-  {
-    symbol: "LABU",
-    name: "Direxion Daily S&P Biotech Bull 3x",
-    category: "3x Leveraged ETF",
-    price: 105.66,
-    change: 4.8,
-    risk: 91,
-    squeeze: 34,
-    ai: "Bearish",
-    confidence: 69,
-    target: 98.4,
-    driver: "Biotech catalyst dispersion is high and recent upside is stretched.",
-    factors: [
-      ["Leverage factor", 96],
-      ["Event proximity", 88],
-      ["Liquidity risk", 72],
-    ],
-    history: [82, 83, 85, 86, 87, 85, 89, 92, 90, 91, 93, 91],
-  },
-  {
-    symbol: "GME",
-    name: "GameStop Corp.",
-    category: "Active Squeeze",
-    price: 28.73,
-    change: 9.7,
-    risk: 86,
-    squeeze: 91,
-    ai: "Bullish",
-    confidence: 78,
-    target: 34.9,
-    driver: "Mention velocity, call skew, and borrow pressure are accelerating together.",
-    factors: [
-      ["Short interest % of float", 84],
-      ["Retail sentiment extremes", 93],
-      ["Options imbalance", 79],
-    ],
-    history: [62, 66, 71, 78, 81, 84, 88, 90, 87, 85, 86, 86],
-  },
-  {
-    symbol: "CVNA",
-    name: "Carvana Co.",
-    category: "Squeeze Candidate",
-    price: 212.59,
-    change: 5.6,
-    risk: 79,
-    squeeze: 82,
-    ai: "Bullish",
-    confidence: 74,
-    target: 229.0,
-    driver: "High short interest is meeting unusually persistent upside volume.",
-    factors: [
-      ["Short interest % of float", 81],
-      ["Days to cover", 73],
-      ["Volume surge", 84],
-    ],
-    history: [64, 65, 67, 70, 72, 75, 77, 78, 81, 80, 78, 79],
-  },
-  {
-    symbol: "SAVA",
-    name: "Cassava Sciences",
-    category: "Penny Stock",
-    price: 3.84,
-    change: -6.2,
-    risk: 93,
-    squeeze: 67,
-    ai: "Bearish",
-    confidence: 81,
-    target: 3.2,
-    driver: "Dilution risk and regulatory overhang dominate the setup.",
-    factors: [
-      ["SEC / regulatory alert", 91],
-      ["Dilution risk", 88],
-      ["Liquidity risk", 84],
-    ],
-    history: [89, 92, 90, 91, 94, 93, 95, 94, 96, 92, 93, 93],
-  },
-  {
-    symbol: "MULN",
-    name: "Mullen Automotive",
-    category: "Penny Stock",
-    price: 0.71,
-    change: -11.4,
-    risk: 98,
-    squeeze: 59,
-    ai: "Bearish",
-    confidence: 87,
-    target: 0.54,
-    driver: "Sub-dollar price action, dilution signals, and weak liquidity stack risk.",
-    factors: [
-      ["Market cap / liquidity", 96],
-      ["Dilution / insider selling", 92],
-      ["Price distance from 52W low", 89],
-    ],
-    history: [92, 91, 94, 95, 96, 95, 97, 96, 98, 99, 97, 98],
-  },
-  {
-    symbol: "UVXY",
-    name: "ProShares Ultra VIX Short-Term Futures",
-    category: "Volatile ETF",
-    price: 24.17,
-    change: 7.9,
-    risk: 90,
-    squeeze: 12,
-    ai: "Neutral",
-    confidence: 66,
-    target: 23.8,
-    driver: "Macro event risk supports volatility, but carry decay is severe.",
-    factors: [
-      ["Volatility decay", 95],
-      ["Macro event proximity", 86],
-      ["Beta to market", 78],
-    ],
-    history: [83, 84, 86, 88, 87, 89, 91, 90, 92, 91, 89, 90],
-  },
-  {
-    symbol: "PLTR",
-    name: "Palantir Technologies",
-    category: "High-Volatility Stock",
-    price: 127.65,
-    change: 2.8,
-    risk: 62,
-    squeeze: 41,
-    ai: "Bullish",
-    confidence: 70,
-    target: 134.3,
-    driver: "Momentum remains constructive, though valuation sensitivity is high.",
-    factors: [
-      ["IV rank", 63],
-      ["Beta to market", 68],
-      ["Retail sentiment extremes", 57],
-    ],
-    history: [54, 56, 58, 61, 59, 60, 64, 63, 61, 62, 64, 62],
-  },
-  {
-    symbol: "SPXL",
-    name: "Direxion Daily S&P 500 Bull 3x",
-    category: "3x Leveraged ETF",
-    price: 168.22,
-    change: 1.2,
-    risk: 71,
-    squeeze: 10,
-    ai: "Neutral",
-    confidence: 58,
-    target: 169.8,
-    driver: "Broad-market trend is intact, but near-term macro catalysts limit conviction.",
-    factors: [
-      ["Leverage factor", 90],
-      ["Realized volatility", 59],
-      ["Event proximity", 64],
-    ],
-    history: [61, 63, 65, 68, 67, 70, 69, 72, 73, 71, 72, 71],
-  },
+// Regarded Trade Site — live volatile-asset intelligence
+// Data: Yahoo Finance v8 chart endpoint, fetched via public CORS proxies.
+// All risk, signal, and event scoring is computed from the real price history
+// returned by Yahoo. Nothing on this dashboard is investment advice.
+
+const UNIVERSE = [
+  { symbol: "TQQQ", name: "ProShares UltraPro QQQ",                 category: "3x Leveraged ETF",     leverage: 3 },
+  { symbol: "SQQQ", name: "ProShares UltraPro Short QQQ",           category: "3x Leveraged ETF",     leverage: 3 },
+  { symbol: "SOXL", name: "Direxion Daily Semiconductor Bull 3x",   category: "3x Leveraged ETF",     leverage: 3 },
+  { symbol: "SPXL", name: "Direxion Daily S&P 500 Bull 3x",         category: "3x Leveraged ETF",     leverage: 3 },
+  { symbol: "LABU", name: "Direxion Daily S&P Biotech Bull 3x",     category: "3x Leveraged ETF",     leverage: 3 },
+  { symbol: "UVXY", name: "ProShares Ultra VIX Short-Term Futures", category: "Volatile ETF",         leverage: 1.5 },
+  { symbol: "GME",  name: "GameStop Corp.",                         category: "Active Squeeze",       leverage: 1 },
+  { symbol: "AMC",  name: "AMC Entertainment Holdings",             category: "Active Squeeze",       leverage: 1 },
+  { symbol: "CVNA", name: "Carvana Co.",                            category: "Squeeze Candidate",    leverage: 1 },
+  { symbol: "PLTR", name: "Palantir Technologies",                  category: "High-Volatility Stock", leverage: 1 },
+  { symbol: "COIN", name: "Coinbase Global",                        category: "High-Volatility Stock", leverage: 1 },
+  { symbol: "MARA", name: "Marathon Digital Holdings",              category: "High-Volatility Stock", leverage: 1 },
+  { symbol: "SAVA", name: "Cassava Sciences",                       category: "High-Volatility Stock", leverage: 1 },
 ];
 
-const predictions = [
-  ["GME", "Bullish", "$34.90", "$35.72", "Exact Hit", "1-week", 78],
-  ["SAVA", "Bearish", "$3.20", "$3.58", "Direction Correct", "3-day", 81],
-  ["SOXL", "Neutral", "$41.50", "$39.96", "Partial", "1-day", 61],
-  ["MULN", "Bearish", "$0.54", "$0.49", "Exact Hit", "1-week", 87],
-  ["PLTR", "Bullish", "$134.30", "$122.10", "Miss", "2-week", 70],
+const PROXIES = [
+  (url) => `https://corsproxy.io/?${encodeURIComponent(url)}`,
+  (url) => `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`,
+  (url) => `https://api.codetabs.com/v1/proxy/?quest=${encodeURIComponent(url)}`,
 ];
 
-const news = [
-  {
-    title: "Borrow fee spikes across high-short retail basket",
-    assets: "GME, CVNA",
-    sentiment: "Bullish",
-    urgency: "Breaking",
-    summary: "Borrow pressure and mention velocity are rising in tandem. The squeeze model refreshed probability overlays for affected assets.",
+const REFRESH_MS = 60_000;
+const HISTORY_RANGE = "6mo";
+const HISTORY_INTERVAL = "1d";
+
+// Anchored, category-level event windows. Verify exact dates with your broker.
+const EVENT_CALENDAR = [
+  { date: "Next FOMC week",       title: "Fed policy decision window",       type: "Macro",          affects: "TQQQ, SQQQ, SPXL, UVXY" },
+  { date: "Mid-month",            title: "FINRA short interest report",      type: "Short Interest", affects: "GME, AMC, CVNA" },
+  { date: "Quarterly",            title: "Earnings season — high-beta names", type: "Earnings",       affects: "PLTR, COIN, CVNA, MARA" },
+  { date: "Monthly",              title: "CPI / PPI release",                type: "Macro",          affects: "3x ETFs, Volatility ETFs" },
+  { date: "3rd Friday monthly",   title: "Monthly options expiration",       type: "Options",        affects: "Squeeze basket" },
+];
+
+const QUANT_BACKTEST = {
+  generatedAt: "2026-05-05T22:47:16.224511+00:00",
+  period: { start: "2011-01-04", end: "2026-05-04" },
+  assumptions: {
+    data: "Yahoo Finance adjusted close via chart endpoint",
+    transactionCostBps: 5,
+    lookahead: "Signals use data available before the return day",
   },
-  {
-    title: "FOMC statement due this week",
-    assets: "TQQQ, SPXL, UVXY",
-    sentiment: "Neutral",
-    urgency: "Macro",
-    summary: "Volatility-sensitive products are showing higher event-risk premiums into the announcement window.",
-  },
-  {
-    title: "Biotech filing window opens for small-cap candidates",
-    assets: "LABU, SAVA",
-    sentiment: "Bearish",
-    urgency: "Filings",
-    summary: "Dilution and trial-update risk pushed several biotech risk gauges above their alert thresholds.",
-  },
-];
+  results: [
+    {
+      name: "Buy & Hold SPY",
+      description: "Always long SPY as a passive market benchmark.",
+      totalReturn: 6.4080476191560125,
+      cagr: 0.13986188165688995,
+      volatility: 0.1709975079953982,
+      sharpe: 0.817917660300955,
+      maxDrawdown: -0.33717259887837037,
+      monthlyWinRate: 0.6810810810810811,
+      avgExposure: 1,
+    },
+    {
+      name: "SPY 200D Trend Timing",
+      description: "Long SPY only when SPY closes above its 200-day average; otherwise in SHY.",
+      totalReturn: 2.474763575784947,
+      cagr: 0.08482602364961633,
+      volatility: 0.12709850681977916,
+      sharpe: 0.6674037781568622,
+      maxDrawdown: -0.29162797045999034,
+      monthlyWinRate: 0.6864864864864865,
+      avgExposure: 0.8425421530479896,
+    },
+    {
+      name: "12M Time-Series Momentum Basket",
+      description: "Monthly equal-weight basket of assets with positive 12-month momentum; idle capital goes to SHY.",
+      totalReturn: 2.1540479114001334,
+      cagr: 0.07798035197153252,
+      volatility: 0.13293639055230436,
+      sharpe: 0.5865989865344722,
+      maxDrawdown: -0.2871993339819019,
+      monthlyWinRate: 0.6108108108108108,
+      avgExposure: 0.9945525291828794,
+    },
+    {
+      name: "Dual Momentum Top-3",
+      description: "Monthly rotation into the top three 12-month momentum assets only if each is above its 200-day average; otherwise SHY.",
+      totalReturn: 2.1887016027834485,
+      cagr: 0.07875063154507611,
+      volatility: 0.13880101910768555,
+      sharpe: 0.5673634966900297,
+      maxDrawdown: -0.27739126080307885,
+      monthlyWinRate: 0.6,
+      avgExposure: 0.9452658884565499,
+    },
+    {
+      name: "SPY 2-Day RSI Mean Reversion",
+      description: "Long SPY after very short-term oversold readings, exit to SHY after rebound.",
+      totalReturn: 0.5290159643380374,
+      cagr: 0.02814637623484728,
+      volatility: 0.12365263448704154,
+      sharpe: 0.22762455771047033,
+      maxDrawdown: -0.37260390215875694,
+      monthlyWinRate: 0.5621621621621622,
+      avgExposure: 0.34941634241245134,
+    },
+  ],
+};
 
-const events = [
-  ["May 8", "FOMC speaker cluster", "Macro", "TQQQ, SPXL, UVXY"],
-  ["May 12", "FINRA short interest report", "Short Interest", "GME, CVNA"],
-  ["May 19", "Biotech catalyst watch", "FDA", "LABU, SAVA"],
-  ["Jun 3", "CPI release", "Macro", "3x ETFs, Volatility ETFs"],
-  ["Jun 14", "Quarterly options expiration", "Options", "Squeeze basket"],
-];
+const state = {
+  assets: [],
+  selectedSymbol: null,
+  watchlist: loadWatchlist(),
+  lastUpdated: null,
+  loading: true,
+  error: null,
+};
 
-const accuracy = [
-  ["3x Leveraged ETFs", 58],
-  ["Penny Stocks", 54],
-  ["Active Squeezes", 63],
-  ["High Confidence 80-100", 68],
-  ["1-week Horizon", 61],
-  ["High-VIX Regime", 57],
-];
+/* ---------- helpers ---------- */
 
-let selectedSymbol = "TQQQ";
-let watchlist = new Set(["TQQQ", "GME", "SAVA"]);
+const $ = (sel) => document.querySelector(sel);
 
-const $ = (selector) => document.querySelector(selector);
+function loadWatchlist() {
+  try {
+    const raw = localStorage.getItem("rts.watchlist");
+    if (raw) return new Set(JSON.parse(raw));
+  } catch {}
+  return new Set(["TQQQ", "GME", "PLTR"]);
+}
 
-function formatCurrency(value) {
-  return value < 1 ? `$${value.toFixed(2)}` : `$${value.toLocaleString(undefined, { maximumFractionDigits: 2 })}`;
+function saveWatchlist() {
+  try { localStorage.setItem("rts.watchlist", JSON.stringify([...state.watchlist])); } catch {}
+}
+
+function fmtCurrency(value) {
+  if (!Number.isFinite(value)) return "—";
+  if (value >= 1000) return `$${value.toLocaleString(undefined, { maximumFractionDigits: 0 })}`;
+  if (value >= 100)  return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`;
+  if (value >= 1)    return `$${value.toFixed(2)}`;
+  return `$${value.toFixed(3)}`;
+}
+
+function fmtPct(value, signed = true) {
+  if (!Number.isFinite(value)) return "—";
+  const sign = signed && value > 0 ? "+" : "";
+  return `${sign}${value.toFixed(2)}%`;
 }
 
 function tier(score) {
-  if (score <= 20) return ["Minimal Risk", "tier-low"];
-  if (score <= 40) return ["Moderate Risk", "tier-mid"];
-  if (score <= 60) return ["High Risk", "tier-high"];
-  if (score <= 80) return ["Very High Risk", "tier-high"];
+  if (score <= 25) return ["Low Risk",       "tier-low"];
+  if (score <= 50) return ["Moderate Risk",  "tier-mid"];
+  if (score <= 70) return ["High Risk",      "tier-high"];
+  if (score <= 85) return ["Very High Risk", "tier-high"];
   return ["Extreme Risk", "tier-extreme"];
 }
 
+function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+
+function logoColor(symbol) {
+  let h = 0;
+  for (let i = 0; i < symbol.length; i++) h = (h * 31 + symbol.charCodeAt(i)) >>> 0;
+  const hue = h % 360;
+  return `hsl(${hue} 55% 38%)`;
+}
+
+/* ---------- data fetching ---------- */
+
+async function fetchOne(symbol) {
+  const yahoo = `https://query1.finance.yahoo.com/v8/finance/chart/${symbol}?range=${HISTORY_RANGE}&interval=${HISTORY_INTERVAL}`;
+  let lastErr = null;
+  for (const wrap of PROXIES) {
+    try {
+      const res = await fetch(wrap(yahoo), { cache: "no-store" });
+      if (!res.ok) { lastErr = new Error(`HTTP ${res.status}`); continue; }
+      const json = await res.json();
+      if (json && json.chart && Array.isArray(json.chart.result) && json.chart.result[0]) {
+        return json.chart.result[0];
+      }
+      lastErr = new Error("Malformed response");
+    } catch (err) { lastErr = err; }
+  }
+  throw lastErr || new Error("All proxies failed");
+}
+
+async function fetchAll() {
+  const settled = await Promise.allSettled(UNIVERSE.map((u) => fetchOne(u.symbol)));
+  const ok = [];
+  let firstErr = null;
+  settled.forEach((s, i) => {
+    if (s.status === "fulfilled") {
+      ok.push({ ...UNIVERSE[i], raw: s.value });
+    } else if (!firstErr) {
+      firstErr = s.reason;
+    }
+  });
+  if (!ok.length) throw firstErr || new Error("No data returned");
+  return ok;
+}
+
+/* ---------- analytics ---------- */
+
+function buildSeries(raw) {
+  const ts = raw.timestamp || [];
+  const q  = raw.indicators?.quote?.[0] || {};
+  const closeRaw = q.close || [];
+  const adj = raw.indicators?.adjclose?.[0]?.adjclose;
+  const close = (adj && adj.length === closeRaw.length) ? adj : closeRaw;
+  const volume = q.volume || [];
+  const out = [];
+  for (let i = 0; i < ts.length; i++) {
+    if (close[i] == null) continue;
+    out.push({ t: ts[i] * 1000, c: close[i], v: volume[i] || 0 });
+  }
+  return out;
+}
+
+function computeAnalytics(asset) {
+  const series = buildSeries(asset.raw);
+  if (series.length < 25) return null;
+
+  const meta = asset.raw.meta || {};
+  const last = series[series.length - 1];
+  const prev = series[series.length - 2];
+  const price = meta.regularMarketPrice ?? last.c;
+  const prevClose = meta.chartPreviousClose ?? meta.previousClose ?? prev.c;
+  const change = ((price - prevClose) / prevClose) * 100;
+
+  const closes = series.map((p) => p.c);
+  const volumes = series.map((p) => p.v);
+
+  // Realized volatility, annualized, last 30 sessions
+  const window = 30;
+  const tail = closes.slice(-window - 1);
+  const rets = [];
+  for (let i = 1; i < tail.length; i++) rets.push(Math.log(tail[i] / tail[i - 1]));
+  const mean = rets.reduce((a, b) => a + b, 0) / rets.length;
+  const variance = rets.reduce((a, b) => a + (b - mean) ** 2, 0) / rets.length;
+  const dailyVol = Math.sqrt(variance);
+  const annVol = dailyVol * Math.sqrt(252) * 100;            // % annualized
+
+  // 30-day max drawdown
+  let peak = -Infinity;
+  let mdd = 0;
+  for (const c of closes.slice(-window)) {
+    if (c > peak) peak = c;
+    mdd = Math.max(mdd, (peak - c) / peak);
+  }
+  const drawdownPct = mdd * 100;
+
+  // Volume surge: last 5 avg vs prior 20 avg
+  const v5  = avg(volumes.slice(-5));
+  const v20 = avg(volumes.slice(-25, -5));
+  const volSurge = v20 > 0 ? v5 / v20 : 1;
+
+  // Momentum signal
+  const ret5  = closes.length >= 6  ? (closes.at(-1) - closes.at(-6))  / closes.at(-6)  : 0;
+  const ret20 = closes.length >= 21 ? (closes.at(-1) - closes.at(-21)) / closes.at(-21) : 0;
+  const accel = ret5 - ret20 / 4;
+  let signal = "Neutral";
+  if (accel >  0.04) signal = "Bullish";
+  if (accel < -0.04) signal = "Bearish";
+  const confidence = Math.round(clamp(40 + Math.abs(accel) * 220, 40, 92));
+  const target = price * (1 + accel * 0.6);
+
+  // Risk composite
+  const volScore   = clamp(annVol * 0.6, 0, 60);              // vol 100% -> 60
+  const levBonus   = asset.leverage >= 3 ? 22 : asset.leverage >= 2 ? 14 : asset.leverage > 1 ? 8 : 0;
+  const pennyBonus = price < 5 ? 14 : price < 10 ? 6 : 0;
+  const ddBonus    = clamp(drawdownPct * 0.4, 0, 16);
+  const risk = Math.round(clamp(volScore + levBonus + pennyBonus + ddBonus, 0, 100));
+
+  // Squeeze proxy: volume surge + 5-day move + risk
+  const squeezeRaw =
+    clamp((volSurge - 1) * 35, 0, 50) +
+    clamp(Math.abs(ret5) * 200, 0, 35) +
+    clamp(risk * 0.15, 0, 15);
+  const squeeze = Math.round(clamp(squeezeRaw, 0, 100));
+
+  const factors = [
+    ["30-day realized volatility", Math.round(clamp(annVol, 0, 200) / 2)],
+    ["Leverage exposure",          asset.leverage >= 3 ? 95 : asset.leverage >= 2 ? 70 : asset.leverage > 1 ? 50 : 25],
+    [price < 5 ? "Sub-$5 price level" : "30-day drawdown", price < 5 ? 88 : Math.round(clamp(drawdownPct * 2, 0, 100))],
+  ];
+
+  const driver = buildDriver({ signal, accel, annVol, volSurge, ret5, drawdownPct });
+
+  return {
+    price, change, prevClose,
+    annVol, drawdownPct, volSurge, ret5, ret20, accel,
+    signal, confidence, target, driver,
+    risk, squeeze, factors,
+    series,
+    name: meta.longName || meta.shortName || asset.name,
+  };
+}
+
+function avg(arr) {
+  if (!arr.length) return 0;
+  let s = 0; for (const v of arr) s += v;
+  return s / arr.length;
+}
+
+function buildDriver({ signal, accel, annVol, volSurge, ret5, drawdownPct }) {
+  const parts = [];
+  if (Math.abs(ret5) > 0.05) parts.push(`5-day move ${(ret5 * 100).toFixed(1)}%`);
+  if (volSurge > 1.4) parts.push(`volume ${volSurge.toFixed(1)}× the 20-day average`);
+  if (annVol > 80) parts.push(`realized vol elevated at ${annVol.toFixed(0)}%`);
+  if (drawdownPct > 15) parts.push(`drawdown ${drawdownPct.toFixed(0)}% off the recent peak`);
+  if (!parts.length) parts.push("price action is range-bound with no decisive momentum");
+  const lead = signal === "Bullish" ? "Momentum is constructive" :
+               signal === "Bearish" ? "Momentum has rolled over" :
+                                      "Momentum is mixed";
+  return `${lead}: ${parts.join(", ")}.`;
+}
+
+/* ---------- prediction log ---------- */
+
+function buildPredictionLog(assets) {
+  const log = [];
+  for (const a of assets) {
+    const closes = a.series.map((p) => p.c);
+    if (closes.length < 30) continue;
+
+    const horizons = [{ ago: 5, label: "5-day" }, { ago: 10, label: "10-day" }];
+    for (const h of horizons) {
+      const i = closes.length - 1 - h.ago;
+      if (i < 21) continue;
+      const c0    = closes[i];
+      const cNow  = closes.at(-1);
+      const win5  = closes.slice(i - 5, i);
+      const win20 = closes.slice(i - 20, i);
+      if (win5.length < 5 || win20.length < 20) continue;
+
+      const r5  = (c0 - win5[0])  / win5[0];
+      const r20 = (c0 - win20[0]) / win20[0];
+      const acc = r5 - r20 / 4;
+      const dir = acc > 0.04 ? "Bullish" : acc < -0.04 ? "Bearish" : "Neutral";
+      const conf = Math.round(clamp(40 + Math.abs(acc) * 220, 40, 92));
+      const target = c0 * (1 + acc * 0.6);
+      const realized = (cNow - c0) / c0;
+
+      let grade = "Miss", gradeClass = "grade-miss";
+      if (dir === "Bullish") {
+        if (realized >  0.05) { grade = "Hit";     gradeClass = "grade-hit"; }
+        else if (realized > 0) { grade = "Partial"; gradeClass = "grade-partial"; }
+      } else if (dir === "Bearish") {
+        if (realized < -0.05) { grade = "Hit";     gradeClass = "grade-hit"; }
+        else if (realized < 0) { grade = "Partial"; gradeClass = "grade-partial"; }
+      } else {
+        if (Math.abs(realized) < 0.04) { grade = "Hit";     gradeClass = "grade-hit"; }
+        else if (Math.abs(realized) < 0.08) { grade = "Partial"; gradeClass = "grade-partial"; }
+      }
+
+      log.push({
+        symbol: a.symbol, direction: dir, horizon: h.label, confidence: conf,
+        target, actual: cNow, entry: c0, realized: realized * 100,
+        grade, gradeClass,
+      });
+    }
+  }
+  log.sort((a, b) => Math.abs(b.realized) - Math.abs(a.realized));
+  return log.slice(0, 12);
+}
+
+function buildAccuracyBars(log) {
+  const groups = [
+    { label: "Bullish calls",  test: (r) => r.direction === "Bullish" },
+    { label: "Bearish calls",  test: (r) => r.direction === "Bearish" },
+    { label: "Neutral calls",  test: (r) => r.direction === "Neutral" },
+    { label: "High confidence (≥75)", test: (r) => r.confidence >= 75 },
+    { label: "5-day horizon",  test: (r) => r.horizon === "5-day" },
+    { label: "10-day horizon", test: (r) => r.horizon === "10-day" },
+  ];
+  return groups
+    .map((g) => {
+      const subset = log.filter(g.test);
+      if (!subset.length) return [g.label, 0, 0];
+      const hits = subset.filter((r) => r.grade === "Hit").length;
+      const partials = subset.filter((r) => r.grade === "Partial").length;
+      const score = Math.round(((hits + partials * 0.5) / subset.length) * 100);
+      return [g.label, score, subset.length];
+    })
+    .filter(([, , n]) => n > 0);
+}
+
+function buildAutoEvents(assets) {
+  const events = [];
+  for (const a of assets) {
+    if (Math.abs(a.change) >= 6) {
+      events.push({
+        title: `${a.symbol} ${a.change >= 0 ? "rallied" : "sold off"} ${Math.abs(a.change).toFixed(1)}% intraday`,
+        assets: a.symbol,
+        sentiment: a.change >= 0 ? "Bullish" : "Bearish",
+        urgency: "Price",
+        summary: a.driver,
+      });
+    }
+    if (a.volSurge >= 1.8) {
+      events.push({
+        title: `${a.symbol} volume surge: ${a.volSurge.toFixed(1)}× the 20-day average`,
+        assets: a.symbol,
+        sentiment: a.ret5 >= 0 ? "Bullish" : "Bearish",
+        urgency: "Volume",
+        summary: `Recent 5-session volume is running ${a.volSurge.toFixed(1)}× the prior 20-session baseline.`,
+      });
+    }
+    if (a.annVol >= 90) {
+      events.push({
+        title: `${a.symbol} realized volatility above 90% (annualized)`,
+        assets: a.symbol,
+        sentiment: "Neutral",
+        urgency: "Volatility",
+        summary: `30-day realized volatility printed ${a.annVol.toFixed(0)}%; option premiums likely reflect a wide range.`,
+      });
+    }
+    if (a.drawdownPct >= 25) {
+      events.push({
+        title: `${a.symbol} drawdown ${a.drawdownPct.toFixed(0)}% from 30-day peak`,
+        assets: a.symbol,
+        sentiment: "Bearish",
+        urgency: "Drawdown",
+        summary: `Closed ${a.drawdownPct.toFixed(0)}% below its highest close of the last 30 sessions.`,
+      });
+    }
+  }
+  events.sort((a, b) => sevRank(b) - sevRank(a));
+  return events.slice(0, 8);
+}
+
+function sevRank(ev) {
+  const order = { Drawdown: 4, Volume: 3, Price: 2, Volatility: 1 };
+  return order[ev.urgency] || 0;
+}
+
+/* ---------- rendering ---------- */
+
 function filteredAssets() {
   const category = $("#categoryFilter").value;
-  const minRisk = Number($("#riskFilter").value);
-  const search = $("#assetSearch").value.trim().toLowerCase();
-  const sort = $("#sortSelect").value;
+  const minRisk  = Number($("#riskFilter").value);
+  const search   = $("#assetSearch").value.trim().toLowerCase();
+  const sort     = $("#sortSelect").value;
+  const keys     = { risk: "risk", change: "change", squeeze: "squeeze", confidence: "confidence", vol: "annVol" };
 
-  return assets
-    .filter((asset) => category === "All" || asset.category === category)
-    .filter((asset) => asset.risk >= minRisk)
-    .filter((asset) => `${asset.symbol} ${asset.name}`.toLowerCase().includes(search))
-    .sort((a, b) => {
-      const key = { risk: "risk", change: "change", squeeze: "squeeze", confidence: "confidence" }[sort];
-      return b[key] - a[key];
-    });
+  return state.assets
+    .filter((a) => category === "All" || a.category === category)
+    .filter((a) => a.risk >= minRisk)
+    .filter((a) => !search || `${a.symbol} ${a.name}`.toLowerCase().includes(search))
+    .sort((a, b) => (b[keys[sort]] || 0) - (a[keys[sort]] || 0));
+}
+
+function renderTicker() {
+  const html = state.assets
+    .map((a) => `
+      <div class="ticker-item">
+        <strong>${a.symbol}</strong>
+        <span class="num">${fmtCurrency(a.price)}</span>
+        <span class="num ${a.change >= 0 ? "positive" : "negative"}">${fmtPct(a.change)}</span>
+      </div>
+    `).join("");
+  $("#ticker").innerHTML = html;
+}
+
+function signalPill(signal, confidence) {
+  const cls = signal === "Bullish" ? "signal-bullish" :
+              signal === "Bearish" ? "signal-bearish" : "signal-neutral";
+  return `<span class="signal-pill ${cls}">${signal}<span class="signal-conf">${confidence}</span></span>`;
 }
 
 function renderAssets() {
   const rows = filteredAssets();
-  $("#assetRows").innerHTML = rows
-    .map((asset) => {
-      const [label, className] = tier(asset.risk);
-      const directionClass = asset.change >= 0 ? "positive" : "negative";
-      return `
-        <tr class="${asset.symbol === selectedSymbol ? "selected" : ""}">
-          <td class="asset-cell"><strong>${asset.symbol}</strong><span>${asset.name}</span></td>
-          <td>${asset.category}</td>
-          <td>${formatCurrency(asset.price)}</td>
-          <td class="${directionClass}">${asset.change > 0 ? "+" : ""}${asset.change.toFixed(1)}%</td>
-          <td><span class="badge ${className}">${asset.risk} / ${label}</span></td>
-          <td>${asset.ai} / ${asset.confidence}</td>
-          <td>${asset.squeeze}</td>
-          <td><button class="row-button" data-symbol="${asset.symbol}">Open</button></td>
-        </tr>
-      `;
-    })
-    .join("");
+  if (!rows.length) {
+    $("#assetRows").innerHTML = `<tr class="skeleton-row"><td colspan="8">No assets match the current filters.</td></tr>`;
+    return;
+  }
+  $("#assetRows").innerHTML = rows.map((a) => {
+    const [label, klass] = tier(a.risk);
+    const dir = a.change >= 0 ? "positive" : "negative";
+    const sel = a.symbol === state.selectedSymbol ? "selected" : "";
+    return `
+      <tr class="${sel}" data-symbol="${a.symbol}">
+        <td>
+          <div class="asset-cell">
+            <div class="asset-logo" style="background:${logoColor(a.symbol)}">${a.symbol.slice(0, 2)}</div>
+            <div class="asset-cell-text"><strong>${a.symbol}</strong><span>${a.name}</span></div>
+          </div>
+        </td>
+        <td>${a.category}</td>
+        <td class="num">${fmtCurrency(a.price)}</td>
+        <td class="num ${dir}">${fmtPct(a.change)}</td>
+        <td class="num"><span class="badge ${klass}">${a.risk} · ${label}</span></td>
+        <td>${signalPill(a.signal, a.confidence)}</td>
+        <td class="num">${a.squeeze}</td>
+        <td><button class="row-button" data-symbol="${a.symbol}">Open</button></td>
+      </tr>
+    `;
+  }).join("");
 
-  document.querySelectorAll(".row-button").forEach((button) => {
-    button.addEventListener("click", () => {
-      selectedSymbol = button.dataset.symbol;
-      renderAll();
+  document.querySelectorAll("#assetRows tr[data-symbol]").forEach((tr) => {
+    tr.addEventListener("click", () => {
+      state.selectedSymbol = tr.dataset.symbol;
+      renderAssets();
+      renderDetail();
     });
   });
 }
 
 function renderDetail() {
-  const asset = assets.find((item) => item.symbol === selectedSymbol) || assets[0];
-  const [label, className] = tier(asset.risk);
-  $("#detailSymbol").textContent = asset.symbol;
-  $("#detailName").textContent = asset.name;
-  $("#gaugeScore").textContent = asset.risk;
-  $("#gaugeLabel").textContent = label;
-  $("#gaugeLabel").className = className;
-  $("#gaugeNeedle").style.transform = `translateX(-50%) rotate(${-90 + asset.risk * 1.8}deg)`;
-  $("#predictionPill").textContent = `${asset.ai} / ${asset.confidence} confidence`;
-  $("#predictionTarget").textContent = `${formatCurrency(asset.target)} base target`;
-  $("#predictionDriver").textContent = asset.driver;
-  $("#watchButton").textContent = watchlist.has(asset.symbol) ? "*" : "+";
+  const a = state.assets.find((x) => x.symbol === state.selectedSymbol) || state.assets[0];
+  if (!a) return;
+  const [label, klass] = tier(a.risk);
 
-  $("#riskFactors").innerHTML = asset.factors
-    .map(([name, score]) => `
-      <div class="factor">
-        <span>${name}</span><strong>${score}</strong>
-        <div class="factor-bar"><i style="width:${score}%"></i></div>
-      </div>
-    `)
-    .join("");
+  $("#detailSymbol").textContent = a.symbol;
+  $("#detailName").textContent = a.name;
+  $("#gaugeScore").textContent = a.risk;
+  const lbl = $("#gaugeLabel");
+  lbl.textContent = label;
+  lbl.className = klass;
 
-  $("#miniChart").innerHTML = asset.history
-    .map((value) => `<span style="height:${Math.max(14, value)}%"></span>`)
-    .join("");
+  // Needle: 0 -> -90deg, 100 -> +90deg
+  const angle = -90 + (a.risk / 100) * 180;
+  $("#gaugeNeedle").setAttribute("transform", `rotate(${angle} 100 100)`);
+
+  $("#predictionPill").innerHTML = signalPill(a.signal, a.confidence);
+  $("#predictionTarget").textContent = `${fmtCurrency(a.target)} 5-day target`;
+  $("#predictionDriver").textContent = a.driver;
+
+  const watched = state.watchlist.has(a.symbol);
+  const wb = $("#watchButton");
+  wb.setAttribute("aria-pressed", watched ? "true" : "false");
+  wb.title = watched ? "Remove from watchlist" : "Add to watchlist";
+
+  $("#riskFactors").innerHTML = a.factors.map(([n, score]) => `
+    <div class="factor">
+      <span>${n}</span><strong>${score}</strong>
+      <div class="factor-bar"><i style="width:${clamp(score, 0, 100)}%"></i></div>
+    </div>
+  `).join("");
+
+  drawSparkline("#miniChart", a.series.slice(-60), { stroke: a.change >= 0 ? "#3ddc97" : "#ff7558" });
+  const slice = a.series.slice(-60);
+  const lo = Math.min(...slice.map((p) => p.c));
+  const hi = Math.max(...slice.map((p) => p.c));
+  $("#miniChartRange").textContent = `${fmtCurrency(lo)} – ${fmtCurrency(hi)}`;
+}
+
+function drawSparkline(selector, series, { stroke = "var(--accent)" } = {}) {
+  const svg = document.querySelector(selector);
+  if (!svg || !series.length) return;
+  const W = 320, H = 110, P = 4;
+  const xs = series.map((_, i) => i);
+  const ys = series.map((p) => p.c);
+  const yMin = Math.min(...ys);
+  const yMax = Math.max(...ys);
+  const yRange = yMax - yMin || 1;
+  const xMax = xs.at(-1) || 1;
+  const sx = (x) => P + (x / xMax) * (W - 2 * P);
+  const sy = (y) => H - P - ((y - yMin) / yRange) * (H - 2 * P);
+  let d = "";
+  series.forEach((p, i) => { d += `${i === 0 ? "M" : "L"}${sx(i).toFixed(2)} ${sy(p.c).toFixed(2)} `; });
+  const area = `${d} L ${sx(xMax).toFixed(2)} ${H - P} L ${sx(0).toFixed(2)} ${H - P} Z`;
+  svg.innerHTML = `
+    <defs>
+      <linearGradient id="sparkFill" x1="0" x2="0" y1="0" y2="1">
+        <stop offset="0%"   stop-color="${stroke}" stop-opacity="0.30"/>
+        <stop offset="100%" stop-color="${stroke}" stop-opacity="0"/>
+      </linearGradient>
+    </defs>
+    <path d="${area}" fill="url(#sparkFill)" stroke="none"/>
+    <path d="${d}" fill="none" stroke="${stroke}" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  `;
 }
 
 function renderMetrics() {
-  $("#totalAssets").textContent = assets.length;
-  $("#extremeAssets").textContent = assets.filter((asset) => asset.risk > 80).length;
-  $("#breakingCount").textContent = news.filter((item) =>
-    item.assets.split(", ").some((symbol) => watchlist.has(symbol))
-  ).length;
-}
-
-function renderTicker() {
-  $("#ticker").innerHTML = assets
-    .map((asset) => `
-      <div class="ticker-item">
-        <strong>${asset.symbol}</strong>
-        <span>${formatCurrency(asset.price)}</span>
-        <span class="${asset.change >= 0 ? "positive" : "negative"}">${asset.change > 0 ? "+" : ""}${asset.change.toFixed(1)}%</span>
-      </div>
-    `)
-    .join("");
+  $("#totalAssets").textContent  = state.assets.length;
+  $("#extremeAssets").textContent = state.assets.filter((a) => a.risk > 80).length;
+  const vols = state.assets.map((a) => a.annVol).filter(Number.isFinite);
+  $("#avgVol").textContent = vols.length ? `${(avg(vols)).toFixed(0)}%` : "—";
+  $("#breakingCount").textContent = state.autoEvents
+    .filter((ev) => ev.assets.split(", ").some((s) => state.watchlist.has(s))).length;
 }
 
 function renderPredictionLog() {
-  $("#predictionLog").innerHTML = predictions
-    .map(([symbol, direction, target, actual, grade, horizon, confidence]) => `
-      <article class="log-item">
-        <div class="log-top">
-          <strong>${symbol} / ${direction} / ${horizon}</strong>
-          <span class="grade">${grade}</span>
-        </div>
-        <p>Target ${target}; actual close ${actual}; confidence ${confidence}/100.</p>
-      </article>
-    `)
-    .join("");
+  const items = state.predictionLog || [];
+  if (!items.length) { $("#predictionLog").innerHTML = `<div class="empty">No graded signals yet.</div>`; return; }
+  $("#predictionLog").innerHTML = items.map((r) => `
+    <article class="log-item">
+      <div class="log-top">
+        <strong>${r.symbol} · ${r.direction} · ${r.horizon}</strong>
+        <span class="${r.gradeClass}">${r.grade}</span>
+      </div>
+      <p>Entry ${fmtCurrency(r.entry)} · target ${fmtCurrency(r.target)} · current ${fmtCurrency(r.actual)} (${fmtPct(r.realized)}).</p>
+      <small>Confidence ${r.confidence} · graded ${r.horizon} after the call.</small>
+    </article>
+  `).join("");
 }
 
 function renderAccuracy() {
-  $("#accuracyBars").innerHTML = accuracy
-    .map(([label, value]) => `
-      <div class="bar-item">
-        <div class="log-top"><strong>${label}</strong><span>${value}%</span></div>
-        <div class="bar-track"><span style="width:${value}%"></span></div>
+  const bars = state.accuracyBars || [];
+  if (!bars.length) { $("#accuracyBars").innerHTML = `<div class="empty">Insufficient history.</div>`; return; }
+  $("#accuracyBars").innerHTML = bars.map(([label, value, n]) => `
+    <div class="bar-item">
+      <div class="log-top">
+        <strong>${label}</strong>
+        <span class="num">${value}% · n=${n}</span>
       </div>
-    `)
-    .join("");
+      <div class="bar-track"><span style="width:${value}%"></span></div>
+    </div>
+  `).join("");
+
+  const log = state.predictionLog || [];
+  const hits = log.filter((r) => r.grade === "Hit").length;
+  const total = log.length;
+  const hi = log.filter((r) => r.confidence >= 75);
+  const hiHits = hi.filter((r) => r.grade === "Hit").length;
+  $("#streakGrid").innerHTML = `
+    <div><strong>${total ? Math.round(hits / total * 100) : 0}%</strong><span>overall hit rate</span></div>
+    <div><strong>${total}</strong><span>graded signals</span></div>
+    <div><strong>${hi.length ? Math.round(hiHits / hi.length * 100) : 0}%</strong><span>high-confidence hits</span></div>
+  `;
 }
 
 function renderRiskRanking() {
-  $("#riskRanking").innerHTML = [...assets]
+  $("#riskRanking").innerHTML = [...state.assets]
     .sort((a, b) => b.risk - a.risk)
-    .map((asset) => {
-      const [label, className] = tier(asset.risk);
+    .map((a) => {
+      const [label, klass] = tier(a.risk);
       return `
         <article class="risk-row">
-          <div><strong>${asset.symbol}</strong><span> ${asset.name}</span></div>
-          <span class="badge ${className}">${asset.risk} / ${label}</span>
+          <div class="asset-cell">
+            <div class="asset-logo" style="background:${logoColor(a.symbol)}">${a.symbol.slice(0, 2)}</div>
+            <div class="asset-cell-text"><strong>${a.symbol}</strong><span>${a.name}</span></div>
+          </div>
+          <span class="badge ${klass}">${a.risk} · ${label}</span>
         </article>
       `;
-    })
-    .join("");
+    }).join("");
 }
 
 function renderNews() {
-  $("#newsList").innerHTML = news
-    .map((item) => `
-      <article class="news-item">
-        <div class="news-top">
-          <strong>${item.title}</strong>
-          <span class="badge ${item.sentiment === "Bearish" ? "tier-extreme" : item.sentiment === "Bullish" ? "tier-low" : "tier-mid"}">${item.sentiment}</span>
-        </div>
-        <p>${item.summary}</p>
-        <small>${item.urgency} / ${item.assets}</small>
-      </article>
-    `)
-    .join("");
+  const events = state.autoEvents || [];
+  if (!events.length) {
+    $("#newsList").innerHTML = `<div class="empty">No notable signals in the universe right now.</div>`;
+  } else {
+    $("#newsList").innerHTML = events.map((it) => {
+      const klass = it.sentiment === "Bullish" ? "tier-low" : it.sentiment === "Bearish" ? "tier-extreme" : "tier-mid";
+      return `
+        <article class="news-item">
+          <div class="news-top">
+            <strong>${it.title}</strong>
+            <span class="badge ${klass}">${it.sentiment}</span>
+          </div>
+          <p>${it.summary}</p>
+          <small>${it.urgency} · ${it.assets}</small>
+        </article>
+      `;
+    }).join("");
+  }
 
-  $("#eventList").innerHTML = events
-    .map(([date, title, type, affected]) => `
-      <article class="event-item">
-        <div class="event-top"><strong>${date}</strong><span class="pill tier-mid">${type}</span></div>
-        <p>${title}</p>
-        <small>${affected}</small>
-      </article>
-    `)
-    .join("");
+  $("#eventList").innerHTML = EVENT_CALENDAR.map((e) => `
+    <article class="event-item">
+      <div class="event-top"><strong>${e.date}</strong><span class="pill tier-mid">${e.type}</span></div>
+      <p>${e.title}</p>
+      <small>${e.affects}</small>
+    </article>
+  `).join("");
 }
 
 function renderWatchlist() {
-  const saved = assets.filter((asset) => watchlist.has(asset.symbol));
-  $("#watchlistGrid").innerHTML = saved.length
-    ? saved
-        .map((asset) => `
-          <article class="watch-card">
-            <div class="log-top">
-              <strong>${asset.symbol}</strong>
-              <span class="${asset.change >= 0 ? "positive" : "negative"}">${asset.change > 0 ? "+" : ""}${asset.change.toFixed(1)}%</span>
-            </div>
-            <p>${asset.name}</p>
-            <span class="badge ${tier(asset.risk)[1]}">Risk crosses ${Math.max(70, asset.risk - 5)} alert</span>
-          </article>
-        `)
-        .join("")
-    : `<article class="watch-card"><strong>No saved assets</strong><p>Open an asset and star it to add alerts.</p></article>`;
+  const saved = state.assets.filter((a) => state.watchlist.has(a.symbol));
+  if (!saved.length) {
+    $("#watchlistGrid").innerHTML = `<div class="empty">No saved assets. Open an asset and tap the star.</div>`;
+    return;
+  }
+  $("#watchlistGrid").innerHTML = saved.map((a) => {
+    const [label, klass] = tier(a.risk);
+    return `
+      <article class="watch-card">
+        <div class="watch-symbol">
+          <div class="asset-logo" style="background:${logoColor(a.symbol)}">${a.symbol.slice(0, 2)}</div>
+          <div class="asset-cell-text"><strong>${a.symbol}</strong><span>${a.name}</span></div>
+        </div>
+        <p class="num ${a.change >= 0 ? "positive" : "negative"}">${fmtCurrency(a.price)} · ${fmtPct(a.change)}</p>
+        <svg class="spark" id="spark-${a.symbol}" viewBox="0 0 320 110" preserveAspectRatio="none"></svg>
+        <span class="badge ${klass}">${a.risk} · ${label}</span>
+      </article>
+    `;
+  }).join("");
+  saved.forEach((a) => drawSparkline(`#spark-${a.symbol}`, a.series.slice(-60),
+    { stroke: a.change >= 0 ? "#3ddc97" : "#ff7558" }));
+}
+
+function fmtDecimalPct(value) {
+  if (!Number.isFinite(value)) return "—";
+  return `${(value * 100).toFixed(2)}%`;
+}
+
+function renderQuant() {
+  const sorted = [...QUANT_BACKTEST.results].sort((a, b) => (b.sharpe - a.sharpe) || (b.cagr - a.cagr));
+  const best = sorted[0];
+  $("#quantBestName").textContent = best.name;
+  $("#quantBestSharpe").textContent = best.sharpe.toFixed(2);
+  $("#quantPeriod").textContent =
+    `${QUANT_BACKTEST.period.start} to ${QUANT_BACKTEST.period.end}; ${QUANT_BACKTEST.assumptions.transactionCostBps} bps turnover cost; no look-ahead.`;
+  $("#quantTakeaway").textContent =
+    "The honest result: passive SPY buy-and-hold beat the tested quant rules on CAGR and Sharpe in this sample. Trend and momentum rules lowered drawdown somewhat, but did not improve absolute performance.";
+
+  $("#quantResults").innerHTML = sorted.map((item, idx) => `
+    <article class="quant-row ${idx === 0 ? "best" : ""}">
+      <div class="quant-row-top">
+        <div>
+          <strong>${idx + 1}. ${item.name}</strong>
+          <p>${item.description}</p>
+        </div>
+        <span class="badge ${idx === 0 ? "tier-low" : "tier-mid"}">${idx === 0 ? "Best" : "Tested"}</span>
+      </div>
+      <div class="quant-stats">
+        <div class="quant-stat"><span>CAGR</span><strong>${fmtDecimalPct(item.cagr)}</strong></div>
+        <div class="quant-stat"><span>Sharpe</span><strong>${item.sharpe.toFixed(2)}</strong></div>
+        <div class="quant-stat"><span>Max DD</span><strong>${fmtDecimalPct(item.maxDrawdown)}</strong></div>
+        <div class="quant-stat"><span>Total</span><strong>${fmtDecimalPct(item.totalReturn)}</strong></div>
+        <div class="quant-stat"><span>Exposure</span><strong>${fmtDecimalPct(item.avgExposure)}</strong></div>
+      </div>
+    </article>
+  `).join("");
 }
 
 function renderAll() {
+  renderTicker();
   renderAssets();
   renderDetail();
   renderMetrics();
-  renderTicker();
   renderPredictionLog();
   renderAccuracy();
   renderRiskRanking();
   renderNews();
   renderWatchlist();
+  renderQuant();
 }
+
+/* ---------- views & status ---------- */
 
 function setView(view) {
   const titles = {
     dashboard: "Unified Asset Dashboard",
-    ai: "AI Intelligence",
-    risk: "Risk Center",
-    news: "News & Events",
+    ai:        "Signal Intelligence",
+    quant:     "Quant Lab",
+    risk:      "Risk Center",
+    news:      "Market Events",
     watchlist: "Watchlist",
   };
-
-  document.querySelectorAll(".nav-item").forEach((item) => {
-    item.classList.toggle("active", item.dataset.view === view);
-  });
-  document.querySelectorAll(".view").forEach((section) => {
-    section.classList.toggle("active", section.id === `${view}View`);
-  });
+  document.querySelectorAll(".nav-item").forEach((n) => n.classList.toggle("active", n.dataset.view === view));
+  document.querySelectorAll(".view").forEach((s) => s.classList.toggle("active", s.id === `${view}View`));
   $("#pageTitle").textContent = titles[view];
 }
 
+function setStatus(kind, message) {
+  const card = $("#marketStatus");
+  card.classList.remove("is-error", "is-loading");
+  if (kind === "error")    card.classList.add("is-error");
+  if (kind === "loading")  card.classList.add("is-loading");
+  $("#marketStatusLabel").textContent =
+    kind === "error" ? "Live feed unavailable" :
+    kind === "loading" ? "Fetching live quotes…" :
+                         "Live feed connected";
+  $("#streamLatency").textContent = message;
+}
+
+/* ---------- export ---------- */
+
 function exportCsv() {
-  const header = ["Symbol", "Name", "Category", "Price", "Change", "Risk", "AI Call", "Confidence", "Squeeze Score"];
-  const rows = filteredAssets().map((asset) => [
-    asset.symbol,
-    asset.name,
-    asset.category,
-    asset.price,
-    asset.change,
-    asset.risk,
-    asset.ai,
-    asset.confidence,
-    asset.squeeze,
+  const header = ["Symbol", "Name", "Category", "Price", "Change %", "30d Vol %", "Risk", "Signal", "Confidence", "Squeeze"];
+  const rows = filteredAssets().map((a) => [
+    a.symbol, a.name, a.category,
+    a.price.toFixed(4), a.change.toFixed(2), a.annVol.toFixed(2),
+    a.risk, a.signal, a.confidence, a.squeeze,
   ]);
   const csv = [header, ...rows]
-    .map((row) => row.map((cell) => `"${String(cell).replaceAll('"', '""')}"`).join(","))
+    .map((r) => r.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(","))
     .join("\n");
   const blob = new Blob([csv], { type: "text/csv" });
   const url = URL.createObjectURL(blob);
   const link = document.createElement("a");
   link.href = url;
-  link.download = "regarded-trade-assets.csv";
+  link.download = `regarded-trade-${new Date().toISOString().slice(0, 10)}.csv`;
   link.click();
   URL.revokeObjectURL(url);
 }
 
-function simulateStream() {
-  assets.forEach((asset) => {
-    const drift = (Math.random() - 0.48) * 0.18;
-    asset.price = Math.max(0.01, asset.price * (1 + drift / 100));
-    asset.change += (Math.random() - 0.5) * 0.08;
-  });
-  $("#streamLatency").textContent = `${(1.2 + Math.random() * 1.4).toFixed(1)}s latency`;
-  renderTicker();
-  renderAssets();
-  renderDetail();
+/* ---------- refresh loop ---------- */
+
+async function refresh() {
+  setStatus("loading", "Fetching live quotes…");
+  try {
+    const raw = await fetchAll();
+    const enriched = raw.map((a) => {
+      const an = computeAnalytics(a);
+      if (!an) return null;
+      return { ...a, ...an };
+    }).filter(Boolean);
+
+    if (!enriched.length) throw new Error("No usable data");
+
+    state.assets = enriched;
+    state.lastUpdated = new Date();
+    state.predictionLog = buildPredictionLog(enriched);
+    state.accuracyBars  = buildAccuracyBars(state.predictionLog);
+    state.autoEvents    = buildAutoEvents(enriched);
+
+    if (!state.selectedSymbol || !enriched.find((a) => a.symbol === state.selectedSymbol)) {
+      state.selectedSymbol = enriched[0].symbol;
+    }
+
+    state.loading = false;
+    state.error = null;
+    renderAll();
+    setStatus("ok", `Updated ${state.lastUpdated.toLocaleTimeString()}`);
+  } catch (err) {
+    console.error("[regarded] fetch failed", err);
+    state.error = err;
+    setStatus("error", "Open via http://localhost or use a CORS-friendly proxy.");
+    if (!state.assets.length) {
+      $("#assetRows").innerHTML = `
+        <tr class="skeleton-row">
+          <td colspan="8">
+            Couldn't reach the market data feed.
+            Try refreshing, or serve this folder over <code>http://localhost</code>
+            (e.g. <code>python3 -m http.server</code>) — public CORS proxies block <code>file://</code> origins.
+          </td>
+        </tr>`;
+    }
+  }
 }
 
-$("#navList").addEventListener("click", (event) => {
-  const item = event.target.closest(".nav-item");
+/* ---------- wiring ---------- */
+
+$("#navList").addEventListener("click", (e) => {
+  const item = e.target.closest(".nav-item");
   if (item) setView(item.dataset.view);
 });
 
@@ -513,16 +844,30 @@ $("#navList").addEventListener("click", (event) => {
 });
 
 $("#watchButton").addEventListener("click", () => {
-  if (watchlist.has(selectedSymbol)) watchlist.delete(selectedSymbol);
-  else watchlist.add(selectedSymbol);
-  renderAll();
+  if (!state.selectedSymbol) return;
+  if (state.watchlist.has(state.selectedSymbol)) state.watchlist.delete(state.selectedSymbol);
+  else state.watchlist.add(state.selectedSymbol);
+  saveWatchlist();
+  renderDetail();
+  renderMetrics();
+  renderWatchlist();
 });
 
 $("#themeToggle").addEventListener("click", () => {
   document.body.classList.toggle("light");
+  try { localStorage.setItem("rts.theme", document.body.classList.contains("light") ? "light" : "dark"); } catch {}
+});
+
+$("#refreshBtn").addEventListener("click", () => {
+  $("#refreshBtn").classList.remove("spin");
+  void $("#refreshBtn").offsetWidth;        // restart animation
+  $("#refreshBtn").classList.add("spin");
+  refresh();
 });
 
 $("#exportCsv").addEventListener("click", exportCsv);
 
-renderAll();
-setInterval(simulateStream, 3800);
+try { if (localStorage.getItem("rts.theme") === "light") document.body.classList.add("light"); } catch {}
+
+refresh();
+setInterval(refresh, REFRESH_MS);
