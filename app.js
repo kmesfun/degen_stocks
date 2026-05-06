@@ -109,10 +109,34 @@ const state = {
   assets: [],
   selectedSymbol: null,
   watchlist: loadWatchlist(),
+  signalMode: loadSignalMode(),       // "momentum" | "rsi" | "combined"
+  rsiBacktest: null,                  // loaded from ./data/rsi_backtest.json
   lastUpdated: null,
   loading: true,
   error: null,
 };
+
+function loadSignalMode() {
+  try {
+    const v = localStorage.getItem("rts.signalMode");
+    if (v === "rsi" || v === "combined" || v === "momentum") return v;
+  } catch {}
+  return "momentum";
+}
+
+function saveSignalMode() {
+  try { localStorage.setItem("rts.signalMode", state.signalMode); } catch {}
+}
+
+async function loadRsiBacktest() {
+  try {
+    const res = await fetch("./data/rsi_backtest.json", { cache: "no-store" });
+    if (!res.ok) return;
+    state.rsiBacktest = await res.json();
+  } catch (err) {
+    console.warn("[regarded] rsi_backtest.json not loaded:", err.message);
+  }
+}
 
 /* ---------- helpers ---------- */
 
@@ -159,6 +183,102 @@ function logoColor(symbol) {
   for (let i = 0; i < symbol.length; i++) h = (h * 31 + symbol.charCodeAt(i)) >>> 0;
   const hue = h % 360;
   return `hsl(${hue} 55% 38%)`;
+}
+
+// Wilder-smoothed RSI. Returns the latest value, or null if insufficient data.
+function rsiLatest(closes, window = 14) {
+  if (!Array.isArray(closes) || closes.length <= window) return null;
+  let gains = 0, losses = 0;
+  for (let i = 1; i <= window; i++) {
+    const d = closes[i] - closes[i - 1];
+    if (d >= 0) gains += d; else losses += -d;
+  }
+  let avgGain = gains / window;
+  let avgLoss = losses / window;
+  for (let i = window + 1; i < closes.length; i++) {
+    const d = closes[i] - closes[i - 1];
+    const g = Math.max(d, 0);
+    const l = Math.max(-d, 0);
+    avgGain = (avgGain * (window - 1) + g) / window;
+    avgLoss = (avgLoss * (window - 1) + l) / window;
+  }
+  if (avgLoss === 0) return 100;
+  const rs = avgGain / avgLoss;
+  return 100 - 100 / (1 + rs);
+}
+
+function rsiZone(rsi) {
+  if (!Number.isFinite(rsi)) return ["—", "tier-mid"];
+  if (rsi <= 20) return ["Deep oversold", "tier-low"];
+  if (rsi <= 30) return ["Oversold", "tier-low"];
+  if (rsi >= 80) return ["Deep overbought", "tier-extreme"];
+  if (rsi >= 70) return ["Overbought", "tier-high"];
+  if (rsi >= 55) return ["Trending up", "tier-low"];
+  if (rsi <= 45) return ["Trending down", "tier-high"];
+  return ["Neutral", "tier-mid"];
+}
+
+// Returns { signal, confidence, target, driver, rule, ruleStats }
+function rsiSignal(asset) {
+  const closes = asset.series.map((p) => p.c);
+  const rsi14 = rsiLatest(closes, 14);
+  const rsi2  = rsiLatest(closes, 2);
+  const bt = state.rsiBacktest?.perAsset?.[asset.symbol];
+  const bestRule = bt && bt.rules.find((r) => r.ruleId === bt.bestRuleId);
+  const winRate = bestRule?.winRate ?? 0.5;
+
+  let signal = "Neutral";
+  let extremity = 0;
+  let usingWindow = "rsi14";
+  let liveRsi = rsi14;
+
+  if (bestRule?.ruleId === "rsi2_oversold") {
+    usingWindow = "rsi2";
+    liveRsi = rsi2;
+    if (rsi2 != null && rsi2 < 10)        { signal = "Bullish"; extremity = (10 - rsi2) / 10; }
+    else if (rsi2 != null && rsi2 > 70)   { signal = "Bearish"; extremity = (rsi2 - 70) / 30; }
+  } else if (bestRule?.ruleId === "rsi14_trend") {
+    if (rsi14 != null && rsi14 > 55)      { signal = "Bullish"; extremity = (rsi14 - 50) / 50; }
+    else if (rsi14 != null && rsi14 < 45) { signal = "Bearish"; extremity = (50 - rsi14) / 50; }
+  } else {
+    // Default: RSI(14) mean reversion thresholds
+    const entry = bestRule?.ruleId === "rsi14_aggressive" ? 20 : 30;
+    const exit  = bestRule?.ruleId === "rsi14_aggressive" ? 65 : 55;
+    if (rsi14 != null && rsi14 < entry)      { signal = "Bullish"; extremity = (entry - rsi14) / entry; }
+    else if (rsi14 != null && rsi14 > exit)  { signal = "Bearish"; extremity = (rsi14 - exit) / (100 - exit); }
+  }
+
+  const confidence = Math.round(clamp(40 + winRate * 50 + extremity * 12, 40, 92));
+  const target = asset.price * (1 + (signal === "Bullish" ? 0.04 : signal === "Bearish" ? -0.04 : 0) * (0.5 + extremity));
+  const ruleLabel = bestRule?.name || "RSI(14) default";
+  const driver = liveRsi != null
+    ? `RSI(${usingWindow === "rsi2" ? 2 : 14}) is ${liveRsi.toFixed(1)} — ${rsiZone(liveRsi)[0].toLowerCase()}. Rule: ${ruleLabel}.`
+    : "Insufficient history for RSI signal.";
+
+  return { signal, confidence, target, driver, rsi14, rsi2, liveRsi, rule: bestRule, ruleLabel };
+}
+
+function combinedSignal(momentum, rsi) {
+  if (momentum.signal === rsi.signal && momentum.signal !== "Neutral") {
+    return {
+      signal: momentum.signal,
+      confidence: Math.round(clamp((momentum.confidence + rsi.confidence) / 2 + 5, 40, 95)),
+      target: (momentum.target + rsi.target) / 2,
+      driver: `Momentum and RSI agree: ${momentum.signal.toLowerCase()}. ${rsi.driver}`,
+    };
+  }
+  return {
+    signal: "Neutral",
+    confidence: Math.round((momentum.confidence + rsi.confidence) / 2),
+    target: rsi.target,
+    driver: `Mixed: momentum says ${momentum.signal.toLowerCase()}, RSI says ${rsi.signal.toLowerCase()}.`,
+  };
+}
+
+function activeSignal(asset) {
+  if (state.signalMode === "rsi")      return { ...asset.rsiSignal, mode: "RSI" };
+  if (state.signalMode === "combined") return { ...combinedSignal(asset.momentumSignal, asset.rsiSignal), mode: "Combined" };
+  return { ...asset.momentumSignal, mode: "Momentum" };
 }
 
 /* ---------- data fetching ---------- */
@@ -254,11 +374,12 @@ function computeAnalytics(asset) {
   const ret5  = closes.length >= 6  ? (closes.at(-1) - closes.at(-6))  / closes.at(-6)  : 0;
   const ret20 = closes.length >= 21 ? (closes.at(-1) - closes.at(-21)) / closes.at(-21) : 0;
   const accel = ret5 - ret20 / 4;
-  let signal = "Neutral";
-  if (accel >  0.04) signal = "Bullish";
-  if (accel < -0.04) signal = "Bearish";
-  const confidence = Math.round(clamp(40 + Math.abs(accel) * 220, 40, 92));
-  const target = price * (1 + accel * 0.6);
+  let momentumSig = "Neutral";
+  if (accel >  0.04) momentumSig = "Bullish";
+  if (accel < -0.04) momentumSig = "Bearish";
+  const momentumConf = Math.round(clamp(40 + Math.abs(accel) * 220, 40, 92));
+  const momentumTarget = price * (1 + accel * 0.6);
+  const momentumDriver = buildDriver({ signal: momentumSig, accel, annVol, volSurge, ret5, drawdownPct });
 
   // Risk composite
   const volScore   = clamp(annVol * 0.6, 0, 60);              // vol 100% -> 60
@@ -280,16 +401,20 @@ function computeAnalytics(asset) {
     [price < 5 ? "Sub-$5 price level" : "30-day drawdown", price < 5 ? 88 : Math.round(clamp(drawdownPct * 2, 0, 100))],
   ];
 
-  const driver = buildDriver({ signal, accel, annVol, volSurge, ret5, drawdownPct });
-
-  return {
-    price, change, prevClose,
+  const partial = {
+    symbol: asset.symbol, price, change, prevClose,
     annVol, drawdownPct, volSurge, ret5, ret20, accel,
-    signal, confidence, target, driver,
-    risk, squeeze, factors,
-    series,
+    risk, squeeze, factors, series,
     name: meta.longName || meta.shortName || asset.name,
   };
+
+  // Momentum and RSI signals are kept side-by-side. activeSignal() picks one
+  // based on the current state.signalMode.
+  partial.momentumSignal = {
+    signal: momentumSig, confidence: momentumConf, target: momentumTarget, driver: momentumDriver,
+  };
+  partial.rsiSignal = rsiSignal(partial);
+  return partial;
 }
 
 function avg(arr) {
@@ -390,7 +515,7 @@ function buildAutoEvents(assets) {
         assets: a.symbol,
         sentiment: a.change >= 0 ? "Bullish" : "Bearish",
         urgency: "Price",
-        summary: a.driver,
+        summary: a.momentumSignal.driver,
       });
     }
     if (a.volSurge >= 1.8) {
@@ -437,13 +562,22 @@ function filteredAssets() {
   const minRisk  = Number($("#riskFilter").value);
   const search   = $("#assetSearch").value.trim().toLowerCase();
   const sort     = $("#sortSelect").value;
-  const keys     = { risk: "risk", change: "change", squeeze: "squeeze", confidence: "confidence", vol: "annVol" };
+
+  const sortVal = (a) => {
+    if (sort === "risk")       return a.risk;
+    if (sort === "change")     return a.change;
+    if (sort === "squeeze")    return a.squeeze;
+    if (sort === "vol")        return a.annVol;
+    if (sort === "confidence") return activeSignal(a).confidence;
+    if (sort === "rsi")        return a.rsiSignal?.liveRsi ?? 0;
+    return 0;
+  };
 
   return state.assets
     .filter((a) => category === "All" || a.category === category)
     .filter((a) => a.risk >= minRisk)
     .filter((a) => !search || `${a.symbol} ${a.name}`.toLowerCase().includes(search))
-    .sort((a, b) => (b[keys[sort]] || 0) - (a[keys[sort]] || 0));
+    .sort((a, b) => (sortVal(b) || 0) - (sortVal(a) || 0));
 }
 
 function renderTicker() {
@@ -467,13 +601,16 @@ function signalPill(signal, confidence) {
 function renderAssets() {
   const rows = filteredAssets();
   if (!rows.length) {
-    $("#assetRows").innerHTML = `<tr class="skeleton-row"><td colspan="8">No assets match the current filters.</td></tr>`;
+    $("#assetRows").innerHTML = `<tr class="skeleton-row"><td colspan="9">No assets match the current filters.</td></tr>`;
     return;
   }
   $("#assetRows").innerHTML = rows.map((a) => {
     const [label, klass] = tier(a.risk);
     const dir = a.change >= 0 ? "positive" : "negative";
     const sel = a.symbol === state.selectedSymbol ? "selected" : "";
+    const sig = activeSignal(a);
+    const rsi = a.rsiSignal?.liveRsi;
+    const [zone, zoneClass] = rsiZone(rsi);
     return `
       <tr class="${sel}" data-symbol="${a.symbol}">
         <td>
@@ -486,7 +623,8 @@ function renderAssets() {
         <td class="num">${fmtCurrency(a.price)}</td>
         <td class="num ${dir}">${fmtPct(a.change)}</td>
         <td class="num"><span class="badge ${klass}">${a.risk} · ${label}</span></td>
-        <td>${signalPill(a.signal, a.confidence)}</td>
+        <td class="num"><span class="badge ${zoneClass}" title="${zone}">${rsi != null ? rsi.toFixed(0) : "—"}</span></td>
+        <td>${signalPill(sig.signal, sig.confidence)}</td>
         <td class="num">${a.squeeze}</td>
         <td><button class="row-button" data-symbol="${a.symbol}">Open</button></td>
       </tr>
@@ -518,9 +656,11 @@ function renderDetail() {
   const angle = -90 + (a.risk / 100) * 180;
   $("#gaugeNeedle").setAttribute("transform", `rotate(${angle} 100 100)`);
 
-  $("#predictionPill").innerHTML = signalPill(a.signal, a.confidence);
-  $("#predictionTarget").textContent = `${fmtCurrency(a.target)} 5-day target`;
-  $("#predictionDriver").textContent = a.driver;
+  const sig = activeSignal(a);
+  $("#predictionPill").innerHTML = `${signalPill(sig.signal, sig.confidence)} <span class="signal-mode-tag">${sig.mode}</span>`;
+  $("#predictionTarget").textContent = `${fmtCurrency(sig.target)} 5-day target`;
+  $("#predictionDriver").textContent = sig.driver;
+  renderRsiCard(a);
 
   const watched = state.watchlist.has(a.symbol);
   const wb = $("#watchButton");
@@ -692,6 +832,88 @@ function fmtDecimalPct(value) {
   return `${(value * 100).toFixed(2)}%`;
 }
 
+function renderRsiCard(asset) {
+  const card = $("#rsiCard");
+  if (!card) return;
+  const rsi = asset.rsiSignal?.liveRsi;
+  const [zone, zoneClass] = rsiZone(rsi);
+  const bt = state.rsiBacktest?.perAsset?.[asset.symbol];
+  const best = bt && bt.rules.find((r) => r.ruleId === bt.bestRuleId);
+
+  let footnote = "Run <code>python3 quant_backtest.py</code> to populate the RSI backtest.";
+  if (best) {
+    const beat = best.cagr - (bt.buyHold?.cagr ?? 0);
+    const beatLbl = `${beat >= 0 ? "+" : ""}${(beat * 100).toFixed(1)} pts vs buy-and-hold`;
+    footnote = `<strong>Best historical rule:</strong> ${best.name} · CAGR ${fmtDecimalPct(best.cagr)} · Sharpe ${best.sharpe.toFixed(2)} · win rate ${(best.winRate * 100).toFixed(0)}% over ${best.tradeCount} trades · ${beatLbl}.`;
+  }
+
+  card.innerHTML = `
+    <div class="rsi-head">
+      <span>RSI snapshot</span>
+      <strong class="num">${rsi != null ? rsi.toFixed(1) : "—"}</strong>
+    </div>
+    <div class="rsi-bar">
+      <span class="rsi-bar-fill" style="width:${rsi != null ? rsi : 0}%"></span>
+      <span class="rsi-mark" style="left:30%"></span>
+      <span class="rsi-mark" style="left:70%"></span>
+      ${rsi != null ? `<span class="rsi-needle" style="left:${clamp(rsi, 0, 100)}%"></span>` : ""}
+    </div>
+    <div class="rsi-zone"><span class="badge ${zoneClass}">${zone}</span></div>
+    <p class="rsi-footnote">${footnote}</p>
+  `;
+}
+
+function renderRsiBacktestPanel() {
+  const target = $("#rsiBacktestList");
+  if (!target) return;
+  const bt = state.rsiBacktest;
+  if (!bt || !bt.perAsset) {
+    target.innerHTML = `<div class="empty">RSI backtest data not loaded — run <code>python3 quant_backtest.py</code> to generate <code>data/rsi_backtest.json</code>.</div>`;
+    return;
+  }
+
+  const rows = Object.entries(bt.perAsset).map(([sym, data]) => {
+    const best = data.rules.find((r) => r.ruleId === data.bestRuleId);
+    if (!best) return null;
+    const beat = best.cagr - (data.buyHold?.cagr ?? 0);
+    return { sym, data, best, beat };
+  }).filter(Boolean).sort((a, b) => b.best.sharpe - a.best.sharpe);
+
+  target.innerHTML = rows.map(({ sym, data, best, beat }) => {
+    const beatClass = beat >= 0 ? "positive" : "negative";
+    return `
+      <article class="rsi-row">
+        <div class="rsi-row-head">
+          <div class="asset-cell">
+            <div class="asset-logo" style="background:${logoColor(sym)}">${sym.slice(0, 2)}</div>
+            <div class="asset-cell-text">
+              <strong>${sym}</strong>
+              <span>${best.name}</span>
+            </div>
+          </div>
+          <span class="badge ${best.sharpe > 0.5 ? "tier-low" : best.sharpe > 0 ? "tier-mid" : "tier-high"}">Sharpe ${best.sharpe.toFixed(2)}</span>
+        </div>
+        <div class="rsi-row-stats">
+          <div><span>Strategy CAGR</span><strong>${fmtDecimalPct(best.cagr)}</strong></div>
+          <div><span>Buy & Hold CAGR</span><strong>${fmtDecimalPct(data.buyHold?.cagr)}</strong></div>
+          <div><span>vs B&amp;H</span><strong class="${beatClass}">${beat >= 0 ? "+" : ""}${(beat * 100).toFixed(1)} pts</strong></div>
+          <div><span>Win rate</span><strong>${(best.winRate * 100).toFixed(0)}%</strong></div>
+          <div><span>Trades</span><strong>${best.tradeCount}</strong></div>
+          <div><span>Avg hold</span><strong>${best.avgHoldDays.toFixed(0)}d</strong></div>
+          <div><span>Max DD</span><strong>${fmtDecimalPct(best.maxDrawdown)}</strong></div>
+          <div><span>Exposure</span><strong>${fmtDecimalPct(best.exposure)}</strong></div>
+        </div>
+      </article>
+    `;
+  }).join("");
+
+  const period = $("#rsiBacktestPeriod");
+  if (period && rows.length) {
+    const ds = rows[0].data;
+    period.textContent = `Per-asset RSI backtest from ${ds.startDate} (varies by symbol). Best rule chosen by Sharpe; ${bt.rules.length} rule variants tested per asset.`;
+  }
+}
+
 function renderQuant() {
   const sorted = [...QUANT_BACKTEST.results].sort((a, b) => (b.sharpe - a.sharpe) || (b.cagr - a.cagr));
   const best = sorted[0];
@@ -733,6 +955,7 @@ function renderAll() {
   renderNews();
   renderWatchlist();
   renderQuant();
+  renderRsiBacktestPanel();
 }
 
 /* ---------- views & status ---------- */
@@ -766,12 +989,17 @@ function setStatus(kind, message) {
 /* ---------- export ---------- */
 
 function exportCsv() {
-  const header = ["Symbol", "Name", "Category", "Price", "Change %", "30d Vol %", "Risk", "Signal", "Confidence", "Squeeze"];
-  const rows = filteredAssets().map((a) => [
-    a.symbol, a.name, a.category,
-    a.price.toFixed(4), a.change.toFixed(2), a.annVol.toFixed(2),
-    a.risk, a.signal, a.confidence, a.squeeze,
-  ]);
+  const header = ["Symbol", "Name", "Category", "Price", "Change %", "30d Vol %", "Risk", "Mode", "Signal", "Confidence", "RSI(14)", "Squeeze"];
+  const rows = filteredAssets().map((a) => {
+    const sig = activeSignal(a);
+    const rsi = a.rsiSignal?.liveRsi;
+    return [
+      a.symbol, a.name, a.category,
+      a.price.toFixed(4), a.change.toFixed(2), a.annVol.toFixed(2),
+      a.risk, sig.mode, sig.signal, sig.confidence,
+      rsi != null ? rsi.toFixed(1) : "", a.squeeze,
+    ];
+  });
   const csv = [header, ...rows]
     .map((r) => r.map((c) => `"${String(c).replaceAll('"', '""')}"`).join(","))
     .join("\n");
@@ -867,7 +1095,26 @@ $("#refreshBtn").addEventListener("click", () => {
 
 $("#exportCsv").addEventListener("click", exportCsv);
 
+$("#signalMode")?.addEventListener("change", (e) => {
+  state.signalMode = e.target.value;
+  saveSignalMode();
+  // Re-run RSI signals so they pick up the latest backtest stats, then re-render.
+  state.assets.forEach((a) => { a.rsiSignal = rsiSignal(a); });
+  renderAssets();
+  renderDetail();
+});
+
 try { if (localStorage.getItem("rts.theme") === "light") document.body.classList.add("light"); } catch {}
 
-refresh();
-setInterval(refresh, REFRESH_MS);
+const sm = $("#signalMode");
+if (sm) sm.value = state.signalMode;
+
+(async () => {
+  await loadRsiBacktest();
+  await refresh();
+  // After the backtest is loaded, recompute RSI signals (they were computed
+  // earlier without backtest stats) so per-asset best-rule logic kicks in.
+  state.assets.forEach((a) => { a.rsiSignal = rsiSignal(a); });
+  renderAll();
+  setInterval(refresh, REFRESH_MS);
+})();

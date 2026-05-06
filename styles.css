@@ -959,4 +959,148 @@ body.light .tier-extreme { color: #b81c33; }
   .quant-stats { grid-template-columns: 1fr 1fr; }
   h1 { font-size: 1.5rem; }
   table { min-width: 720px; }
+  .rsi-row-stats { grid-template-columns: 1fr 1fr; }
+}
+
+/* ---------- RSI snapshot card (detail panel) ---------- */
+.rsi-card {
+  padding: 14px;
+  border-radius: 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  margin-bottom: 12px;
+}
+.rsi-card:empty { display: none; }
+.rsi-head {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  font-size: 0.74rem;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+  font-weight: 600;
+  margin-bottom: 10px;
+}
+.rsi-head strong {
+  font-family: var(--font-mono);
+  font-size: 1.7rem;
+  letter-spacing: -0.02em;
+  color: var(--text-strong);
+  text-transform: none;
+}
+.rsi-bar {
+  position: relative;
+  height: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(61, 220, 151, 0.35) 0%,
+    rgba(61, 220, 151, 0.35) 30%,
+    var(--surface-3) 30%,
+    var(--surface-3) 70%,
+    rgba(255, 117, 88, 0.35) 70%,
+    rgba(255, 117, 88, 0.35) 100%
+  );
+  border-radius: 999px;
+  margin: 6px 0 12px;
+}
+.rsi-mark {
+  position: absolute;
+  top: -3px;
+  width: 1px;
+  height: 14px;
+  background: var(--line-strong);
+}
+.rsi-needle {
+  position: absolute;
+  top: -4px;
+  width: 3px;
+  height: 16px;
+  background: var(--text-strong);
+  border-radius: 999px;
+  transform: translateX(-50%);
+  box-shadow: 0 0 0 2px color-mix(in srgb, var(--surface-2) 80%, transparent);
+  transition: left 360ms cubic-bezier(0.2, 0.7, 0.2, 1);
+}
+.rsi-bar-fill { display: none; }
+.rsi-zone { margin-bottom: 8px; }
+.rsi-footnote {
+  margin: 0;
+  font-size: 0.78rem;
+  color: var(--muted-strong);
+  line-height: 1.5;
+}
+.rsi-footnote code {
+  font-family: var(--font-mono);
+  font-size: 0.74rem;
+  background: var(--surface-3);
+  padding: 1px 5px;
+  border-radius: 4px;
+}
+
+/* ---------- Signal-mode tag inside prediction pill ---------- */
+.signal-mode-tag {
+  display: inline-block;
+  margin-left: 6px;
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  color: var(--muted-strong);
+  font-size: 0.66rem;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 600;
+  vertical-align: middle;
+}
+
+/* ---------- Per-asset RSI backtest panel (Quant Lab) ---------- */
+.rsi-backtest-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 10px;
+}
+.rsi-row {
+  padding: 12px 14px;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  background: var(--surface-2);
+}
+.rsi-row-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+.rsi-row-stats {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+.rsi-row-stats > div {
+  background: color-mix(in srgb, var(--surface) 60%, transparent);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 6px 8px;
+}
+.rsi-row-stats span {
+  display: block;
+  font-size: 0.62rem;
+  color: var(--muted);
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  font-weight: 600;
+}
+.rsi-row-stats strong {
+  display: block;
+  font-family: var(--font-mono);
+  font-variant-numeric: tabular-nums;
+  font-size: 0.92rem;
+  color: var(--text-strong);
+  margin-top: 2px;
+  letter-spacing: -0.01em;
+}
+
+@media (max-width: 1060px) {
+  .rsi-row-stats { grid-template-columns: repeat(2, 1fr); }
 }

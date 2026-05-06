@@ -148,12 +148,21 @@
                   <input id="riskFilter" type="range" min="0" max="100" value="0" />
                 </label>
                 <label>
+                  Signal mode
+                  <select id="signalMode">
+                    <option value="momentum">Momentum (5/20-day accel)</option>
+                    <option value="rsi">RSI (per-asset best rule)</option>
+                    <option value="combined">Combined (both must agree)</option>
+                  </select>
+                </label>
+                <label>
                   Sort by
                   <select id="sortSelect">
                     <option value="risk">Risk Score</option>
                     <option value="change">Daily Change</option>
                     <option value="squeeze">Squeeze Proxy</option>
                     <option value="confidence">Signal Confidence</option>
+                    <option value="rsi">RSI(14)</option>
                     <option value="vol">Realized Vol</option>
                   </select>
                 </label>
@@ -168,13 +177,14 @@
                       <th class="num">Price</th>
                       <th class="num">Change</th>
                       <th class="num">Risk</th>
+                      <th class="num" title="Wilder RSI(14) on adjusted closes">RSI</th>
                       <th>Signal</th>
                       <th class="num">Squeeze</th>
                       <th aria-label="Actions"></th>
                     </tr>
                   </thead>
                   <tbody id="assetRows">
-                    <tr class="skeleton-row"><td colspan="8">Loading live quotes…</td></tr>
+                    <tr class="skeleton-row"><td colspan="9">Loading live quotes…</td></tr>
                   </tbody>
                 </table>
               </div>
@@ -218,8 +228,10 @@
                 <span class="pill" id="predictionPill">—</span>
                 <h3 id="predictionTarget">—</h3>
                 <p id="predictionDriver">Signal will appear once data loads.</p>
-                <small>Heuristic momentum signal derived from recent price action — not investment advice. Confidence does not represent probability of profit.</small>
+                <small>Heuristic signal derived from recent price action — not investment advice. Confidence does not represent probability of profit.</small>
               </div>
+
+              <div class="rsi-card" id="rsiCard"></div>
 
               <div class="mini-chart-wrap">
                 <div class="mini-chart-header">
@@ -302,6 +314,16 @@
               </div>
             </section>
           </div>
+
+          <section class="panel" style="margin-top: 14px;">
+            <div class="panel-header">
+              <div>
+                <h2>Per-Asset RSI Backtest</h2>
+                <p id="rsiBacktestPeriod">Long-only RSI backtest across the volatile-asset universe. Best rule chosen by Sharpe.</p>
+              </div>
+            </div>
+            <div class="rsi-backtest-list" id="rsiBacktestList"></div>
+          </section>
         </section>
 
         <section class="view" id="riskView">

@@ -13,6 +13,8 @@ on the client:
 - Auto-detected market events (vol spikes, drawdowns, volume surges)
 - Replayed signal-vs-outcome log graded mechanically against today's price
 - Quant Lab backtest for trend, momentum, mean-reversion, and SPY benchmark rules
+- Per-asset RSI backtest (4 rule variants per symbol) with the best historical
+  rule wired into a selectable RSI signal mode for live predictions
 
 ## Run
 
@@ -47,3 +49,17 @@ python3 quant_backtest.py
 The script downloads adjusted daily ETF prices from Yahoo Finance, caches them
 in `data/`, and writes `data/quant_results.json` plus
 `data/quant_equity_curves.csv`.
+
+It also runs a long-only RSI backtest on the volatile-asset universe (TQQQ,
+SQQQ, SOXL, SPXL, LABU, UVXY, GME, AMC, CVNA, PLTR, COIN, MARA, SAVA) and
+writes `data/rsi_backtest.json`. Four rules are tested per symbol:
+
+- **RSI(14) Mean Reversion** — buy < 30, exit > 55
+- **RSI(14) Aggressive Reversion** — buy < 20, exit > 65
+- **RSI(2) Oversold (Connors)** — buy < 10, exit > 70
+- **RSI(14) Trend Follow** — long while RSI > 50
+
+Each asset's best rule (by Sharpe) is loaded by the dashboard. Choose
+**Signal mode → RSI** in the filter row to drive live predictions from the
+asset's historically best RSI rule, or **Combined** to require both the
+momentum and RSI signals to agree.
