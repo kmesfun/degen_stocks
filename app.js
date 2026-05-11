@@ -16,6 +16,7 @@ const UNIVERSE = [
   { symbol: "PLTR", name: "Palantir Technologies",                  category: "High-Volatility Stock", leverage: 1 },
   { symbol: "COIN", name: "Coinbase Global",                        category: "High-Volatility Stock", leverage: 1 },
   { symbol: "MARA", name: "Marathon Digital Holdings",              category: "High-Volatility Stock", leverage: 1 },
+  { symbol: "NBIS", name: "Nebius Group N.V.",                       category: "High-Volatility Stock", leverage: 1 },
   { symbol: "SAVA", name: "Cassava Sciences",                       category: "High-Volatility Stock", leverage: 1 },
 ];
 
@@ -29,13 +30,64 @@ const REFRESH_MS = 60_000;
 const HISTORY_RANGE = "6mo";
 const HISTORY_INTERVAL = "1d";
 
-// Anchored, category-level event windows. Verify exact dates with your broker.
+// Anchored, category-level event windows with concrete upcoming dates.
 const EVENT_CALENDAR = [
-  { date: "Next FOMC week",       title: "Fed policy decision window",       type: "Macro",          affects: "TQQQ, SQQQ, SPXL, UVXY" },
-  { date: "Mid-month",            title: "FINRA short interest report",      type: "Short Interest", affects: "GME, AMC, CVNA" },
-  { date: "Quarterly",            title: "Earnings season — high-beta names", type: "Earnings",       affects: "PLTR, COIN, CVNA, MARA" },
-  { date: "Monthly",              title: "CPI / PPI release",                type: "Macro",          affects: "3x ETFs, Volatility ETFs" },
-  { date: "3rd Friday monthly",   title: "Monthly options expiration",       type: "Options",        affects: "Squeeze basket" },
+  {
+    date: "Fri May 8, 2026",
+    time: "8:30 AM ET",
+    title: "Employment Situation for April 2026",
+    type: "Macro",
+    affects: "SPXL, TQQQ, SQQQ, UVXY",
+    source: "BLS",
+  },
+  {
+    date: "Tue May 12, 2026",
+    time: "8:30 AM ET",
+    title: "Consumer Price Index for April 2026",
+    type: "Inflation",
+    affects: "3x ETFs, Volatility ETFs, high-beta stocks",
+    source: "BLS",
+  },
+  {
+    date: "Wed May 13, 2026",
+    time: "8:30 AM ET",
+    title: "Producer Price Index for April 2026",
+    type: "Inflation",
+    affects: "TQQQ, SQQQ, SPXL, UVXY",
+    source: "BLS",
+  },
+  {
+    date: "Fri May 15, 2026",
+    time: "Market close",
+    title: "Monthly options expiration",
+    type: "Options",
+    affects: "GME, AMC, CVNA, PLTR, COIN, MARA, NBIS",
+    source: "Cboe 2026 options calendar",
+  },
+  {
+    date: "Wed May 20, 2026",
+    time: "2:00 PM ET",
+    title: "FOMC minutes for Apr. 28-29 meeting",
+    type: "Fed",
+    affects: "Index ETFs, rates-sensitive high-beta names",
+    source: "Federal Reserve",
+  },
+  {
+    date: "Wed May 27, 2026",
+    time: "Publication date",
+    title: "FINRA short interest publication",
+    type: "Short Interest",
+    affects: "GME, AMC, CVNA",
+    source: "FINRA",
+  },
+  {
+    date: "Tue-Wed Jun 16-17, 2026",
+    time: "2:00 PM ET decision / 2:30 PM ET press conference",
+    title: "FOMC meeting with projections",
+    type: "Fed",
+    affects: "TQQQ, SQQQ, SPXL, UVXY, high-beta universe",
+    source: "Federal Reserve",
+  },
 ];
 
 const QUANT_BACKTEST = {
@@ -583,10 +635,11 @@ function filteredAssets() {
 function renderTicker() {
   const html = state.assets
     .map((a) => `
-      <div class="ticker-item">
+      <div class="ticker-item ${a.change >= 0 ? "is-up" : "is-down"}" title="${a.name}">
+        <span class="live-dot" aria-hidden="true"></span>
         <strong>${a.symbol}</strong>
-        <span class="num">${fmtCurrency(a.price)}</span>
-        <span class="num ${a.change >= 0 ? "positive" : "negative"}">${fmtPct(a.change)}</span>
+        <span class="ticker-price">${fmtCurrency(a.price)}</span>
+        <span class="daily-move ${a.change >= 0 ? "positive" : "negative"}">${fmtPct(a.change)}</span>
       </div>
     `).join("");
   $("#ticker").innerHTML = html;
@@ -621,7 +674,7 @@ function renderAssets() {
         </td>
         <td>${a.category}</td>
         <td class="num">${fmtCurrency(a.price)}</td>
-        <td class="num ${dir}">${fmtPct(a.change)}</td>
+        <td><span class="daily-move ${dir}">${fmtPct(a.change)}</span></td>
         <td class="num"><span class="badge ${klass}">${a.risk} · ${label}</span></td>
         <td class="num"><span class="badge ${zoneClass}" title="${zone}">${rsi != null ? rsi.toFixed(0) : "—"}</span></td>
         <td>${signalPill(sig.signal, sig.confidence)}</td>
@@ -795,10 +848,19 @@ function renderNews() {
   }
 
   $("#eventList").innerHTML = EVENT_CALENDAR.map((e) => `
-    <article class="event-item">
-      <div class="event-top"><strong>${e.date}</strong><span class="pill tier-mid">${e.type}</span></div>
-      <p>${e.title}</p>
-      <small>${e.affects}</small>
+    <article class="event-item event-card">
+      <div class="event-date">
+        <strong>${e.date}</strong>
+        <span>${e.time}</span>
+      </div>
+      <div class="event-copy">
+        <div class="event-top">
+          <strong>${e.title}</strong>
+          <span class="pill ${e.type === "Fed" ? "tier-high" : e.type === "Short Interest" ? "tier-extreme" : "tier-mid"}">${e.type}</span>
+        </div>
+        <p>${e.affects}</p>
+        <small>${e.source}</small>
+      </div>
     </article>
   `).join("");
 }
@@ -962,6 +1024,7 @@ function renderAll() {
 
 function setView(view) {
   const titles = {
+    home:      "Main Page",
     dashboard: "Unified Asset Dashboard",
     ai:        "Signal Intelligence",
     quant:     "Quant Lab",
@@ -1062,6 +1125,10 @@ async function refresh() {
 $("#navList").addEventListener("click", (e) => {
   const item = e.target.closest(".nav-item");
   if (item) setView(item.dataset.view);
+});
+
+document.querySelectorAll("[data-jump-view]").forEach((button) => {
+  button.addEventListener("click", () => setView(button.dataset.jumpView));
 });
 
 ["categoryFilter", "riskFilter", "sortSelect", "assetSearch"].forEach((id) => {
